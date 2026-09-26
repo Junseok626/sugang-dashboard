@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>수강신청 비교 대시보드</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/dashboard.css">
+</head>
+<body>
+  <div class="app">
+    <header class="header">
+      <div class="brand">
+        <div class="brand__logo" aria-hidden="true"></div>
+        <h1 class="brand__title">웹 이름</h1>
+      </div>
+
+      <form class="search" id="search-form" role="search">
+        <input class="search__input" id="search-input" type="search" placeholder="과목명, 교수명으로 검색" aria-label="과목명, 교수명으로 검색">
+        <button class="search__button" type="submit">검색</button>
+      </form>
+
+      <div class="meta">
+        <span>2026-2학기 기준</span>
+        <span class="meta__badge">최신 반영일 09.20</span>
+      </div>
+    </header>
+
+    <div class="body">
+      <aside class="filters" aria-label="필터">
+        <fieldset class="filter-group filter-group--tight">
+          <legend class="filter-group__title">이수구분</legend>
+          <label class="checkbox"><input type="checkbox" name="category" value="전공필수">전공필수</label>
+          <label class="checkbox"><input type="checkbox" name="category" value="전공선택">전공선택</label>
+          <label class="checkbox"><input type="checkbox" name="category" value="교양">교양</label>
+        </fieldset>
+
+        <fieldset class="filter-group">
+          <legend class="filter-group__title">요일</legend>
+          <div class="days" id="day-chips">
+            <button class="day-chip" type="button" data-day="월" aria-pressed="false">월</button>
+            <button class="day-chip" type="button" data-day="화" aria-pressed="false">화</button>
+            <button class="day-chip" type="button" data-day="수" aria-pressed="false">수</button>
+            <button class="day-chip" type="button" data-day="목" aria-pressed="false">목</button>
+            <button class="day-chip" type="button" data-day="금" aria-pressed="false">금</button>
+          </div>
+        </fieldset>
+
+        <div class="filter-group">
+          <label class="filter-group__title" for="credit-filter">학점</label>
+          <div class="select">
+            <select id="credit-filter">
+              <option value="">전체</option>
+              <option value="1">1학점</option>
+              <option value="2">2학점</option>
+              <option value="3">3학점</option>
+            </select>
+            <img class="select__chevron" src="css/icon-chevron.svg" width="11.0607" height="6.59099" alt="">
+          </div>
+        </div>
+
+        <div class="filter-group">
+          <label class="filter-group__title" for="rating-filter">최소 평점</label>
+          <div class="select">
+            <select id="rating-filter">
+              <option value="">전체</option>
+              <option value="3">3.0 이상</option>
+              <option value="3.5">3.5 이상</option>
+              <option value="4">4.0 이상</option>
+              <option value="4.5">4.5 이상</option>
+            </select>
+            <img class="select__chevron" src="css/icon-chevron.svg" width="11.0607" height="6.59099" alt="">
+          </div>
+        </div>
+      </aside>
+
+      <main class="results">
+        <p class="results__count" id="result-count"></p>
+        <div class="course-table" role="table" aria-label="검색 결과">
+          <div class="course-table__head" role="row">
+            <span role="columnheader">과목명</span>
+            <span role="columnheader">교수</span>
+            <span role="columnheader">시간</span>
+            <span role="columnheader">학점</span>
+            <span role="columnheader">평점</span>
+            <span role="columnheader" aria-label="담기"></span>
+          </div>
+          <div id="course-rows"></div>
+        </div>
+      </main>
+
+      <aside class="my-timetable" aria-label="내 시간표">
+        <h2 class="my-timetable__title" id="cart-title"></h2>
+        <div class="mini-grid" id="mini-grid"></div>
+        <ul class="cart-list" id="cart-list"></ul>
+        <div class="toast" id="conflict-toast" role="status" hidden>
+          <span class="toast__icon"><img src="css/icon-warning.svg" width="10.3923" height="8.25" alt=""></span>
+          <p class="toast__message" id="conflict-message"></p>
+        </div>
+      </aside>
+    </div>
+  </div>
+
+  <script src="js/data.js"></script>
+  <script src="js/dashboard.js"></script>
+</body>
+</html>
