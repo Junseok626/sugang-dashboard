@@ -1,0 +1,4 @@
+backend/data/processed/*.db
+__pycache__/
+*.pyc
+.venv/
