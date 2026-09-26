@@ -1,4 +1,7 @@
 const DAYS = ["월", "화", "수", "목", "금"];
+const DAY_START = 9 * 60;
+const DAY_END = 19 * 60;
+const SLOT = 30;
 
 const state = {
   courses: [],
@@ -15,17 +18,31 @@ async function loadCourses() {
   return SAMPLE_COURSES;
 }
 
-// "화3,목3" → [{ day: "화", period: 3 }, { day: "목", period: 3 }]
+const toMinutes = (hhmm) => {
+  const [h, m] = hhmm.split(":").map(Number);
+  return h * 60 + m;
+};
+const toClock = (min) => `${String(Math.floor(min / 60)).padStart(2, "0")}:${String(min % 60).padStart(2, "0")}`;
+
+// "화11:00-12:00,목11:00-12:00" → [{ day: "화", start: 660, end: 720 }, ...]
 function parseSlots(dayTime) {
   return dayTime.split(",").map((s) => {
-    const t = s.trim();
-    return { day: t[0], period: Number(t.slice(1)) };
+    const [, day, start, end] = s.trim().match(/^([월화수목금])\s*(\d{1,2}:\d{2})-(\d{1,2}:\d{2})$/);
+    return { day, start: toMinutes(start), end: toMinutes(end) };
   });
 }
 
+// 같은 시간대는 요일을 묶어서 표시: "화·목 11:00–12:00"
 function formatSlots(dayTime) {
-  return dayTime.split(",").map((s) => s.trim()).join(", ");
+  const groups = new Map();
+  for (const s of parseSlots(dayTime)) {
+    const range = `${toClock(s.start)}–${toClock(s.end)}`;
+    groups.set(range, [...(groups.get(range) || []), s.day]);
+  }
+  return [...groups].map(([range, days]) => `${days.join("·")} ${range}`).join(", ");
 }
+
+const overlaps = (a, b) => a.day === b.day && a.start < b.end && b.start < a.end;
 
 function findCourse(id) {
   return state.courses.find((c) => c.offering_id === id);
@@ -38,7 +55,7 @@ function cartSlots() {
 function hasConflict(course) {
   if (state.cart.includes(course.offering_id)) return false;
   const taken = cartSlots();
-  return parseSlots(course.day_time).some((s) => taken.some((t) => t.day === s.day && t.period === s.period));
+  return parseSlots(course.day_time).some((s) => taken.some((t) => overlaps(s, t)));
 }
 
 function matchesFilters(course) {
@@ -109,24 +126,36 @@ function renderToast(visible) {
   }
 }
 
+// 09:00~19:00, 30분 단위 행. 시간 라벨은 1시간(2행)씩 차지.
 function renderMiniGrid() {
   const grid = document.getElementById("mini-grid");
-  const periods = state.courses.flatMap((c) => parseSlots(c.day_time).map((s) => s.period));
-  const first = Math.min(...periods);
-  const last = Math.max(...periods);
   const taken = cartSlots();
+  const place = (node, row, col, rowSpan = 1) => {
+    node.style.gridRow = `${row} / span ${rowSpan}`;
+    node.style.gridColumn = String(col);
+    if (col === DAYS.length + 1) node.classList.add("mini-grid__cell--last-col");
+    grid.append(node);
+  };
   grid.replaceChildren();
 
-  grid.append(el("div", "mini-grid__cell mini-grid__cell--head"));
-  for (const d of DAYS) grid.append(el("div", "mini-grid__cell mini-grid__cell--head", d));
+  place(el("div", "mini-grid__cell mini-grid__cell--head"), 1, 1);
+  DAYS.forEach((d, i) => place(el("div", "mini-grid__cell mini-grid__cell--head", d), 1, i + 2));
 
-  for (let p = first; p <= last; p++) {
-    const lastRow = p === last ? " mini-grid__cell--last-row" : "";
-    grid.append(el("div", "mini-grid__cell mini-grid__cell--label" + lastRow, String(p)));
-    for (const d of DAYS) {
-      const filled = taken.some((t) => t.day === d && t.period === p) ? " mini-grid__cell--filled" : "";
-      grid.append(el("div", "mini-grid__cell" + filled + lastRow));
+  const slots = (DAY_END - DAY_START) / SLOT;
+  for (let i = 0; i < slots; i++) {
+    const start = DAY_START + i * SLOT;
+    const row = i + 2;
+    const lastRow = i === slots - 1 ? " mini-grid__cell--last-row" : "";
+    if (start % 60 === 0) {
+      const hourLast = i + 2 >= slots ? " mini-grid__cell--last-row" : "";
+      place(el("div", "mini-grid__cell mini-grid__cell--label" + hourLast, String(start / 60)), row, 1, 2);
     }
+    DAYS.forEach((d, di) => {
+      const slot = { day: d, start, end: start + SLOT };
+      const filled = taken.some((t) => overlaps(slot, t)) ? " mini-grid__cell--filled" : "";
+      const half = start % 60 === 0 ? " mini-grid__cell--half" : "";
+      place(el("div", "mini-grid__cell" + filled + half + lastRow), row, di + 2);
+    });
   }
 }
 
