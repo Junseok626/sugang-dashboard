@@ -183,7 +183,7 @@ button, input, select { font: inherit; color: inherit; }
 .course-table__head,
 .course-row {
   display: grid;
-  grid-template-columns: 168px 93px 116px 79px 131px auto;
+  grid-template-columns: 168px 93px 150px 79px 97px auto;
   align-items: center;
   padding: 0 12px;
 }
@@ -240,8 +240,7 @@ button, input, select { font: inherit; color: inherit; }
 .mini-grid {
   display: grid;
   grid-template-columns: 36px repeat(5, 1fr);
-  grid-template-rows: 24px;
-  grid-auto-rows: 33px;
+  grid-template-rows: 24px repeat(20, 10px); /* 09:00~19:00, 30분 단위 */
   border: 1px solid var(--color-border);
   border-radius: 6px;
   overflow: hidden;
@@ -251,7 +250,8 @@ button, input, select { font: inherit; color: inherit; }
   border-bottom: 1px solid var(--color-border);
   background: var(--color-surface);
 }
-.mini-grid__cell:nth-child(6n) { border-right: 0; }
+.mini-grid__cell--last-col { border-right: 0; }
+.mini-grid__cell--half { border-bottom-color: color-mix(in srgb, var(--color-border) 45%, transparent); }
 .mini-grid__cell--last-row { border-bottom: 0; }
 .mini-grid__cell--head {
   display: flex;
