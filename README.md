@@ -7,8 +7,9 @@
 
 VS CODE에서 웹 확인하기
 터미널에서 이 명령어 실행
+'''
 python -m http.server 5510 --directory C:/Users/user/Documents/sugang-dashboard/frontend
-
+'''
 Serving HTTP on :: port 5510 나오면
 http://localhost:5510 접속
 
