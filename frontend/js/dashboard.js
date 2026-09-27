@@ -96,10 +96,10 @@ function renderResults() {
       ? el("span", "course-row__rating course-row__rating--conflict", "시간 겹침")
       : el("span", "course-row__rating", `★ ${course.rating.toFixed(1)}`);
 
-    const btn = el("button", "btn-add", inCart ? "담김" : "담기");
+    const btn = el("button", inCart ? "btn-add btn-add--remove" : "btn-add", inCart ? "빼기" : "담기");
     btn.type = "button";
-    btn.disabled = conflict || inCart;
-    btn.addEventListener("click", () => addToCart(course.offering_id));
+    btn.disabled = conflict;
+    btn.addEventListener("click", () => (inCart ? removeFromCart : addToCart)(course.offering_id));
 
     row.append(
       el("span", "", course.course_name),

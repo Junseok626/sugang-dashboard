@@ -12,7 +12,9 @@
   --color-text-disabled: #a6a29a;
   --color-text-on-primary: #ffffff;
   --color-star: #b8860b;
-  --color-danger: #d23b3b;
+  --color-danger: #b24a3f;
+  --color-remove: #b24a3f;
+  --color-remove-subtle: #f8ece9;
   --color-disabled-bg: #eeece7;
   --color-warn-bg: #fdf4dd;
   --color-warn-border: #ebcb84;
@@ -215,6 +217,11 @@ button, input, select { font: inherit; color: inherit; }
   border: 1px solid var(--color-primary);
   border-radius: 4px;
   cursor: pointer;
+}
+.btn-add--remove {
+  color: var(--color-remove);
+  background: var(--color-remove-subtle);
+  border-color: var(--color-remove);
 }
 .btn-add:disabled {
   color: var(--color-text-disabled);
