@@ -33,3 +33,11 @@ SQL을 쓸 때 꼭 지킬 것
         나쁨:  db.execute(f"SELECT * FROM course WHERE course_code = '{code}'")
     나쁜 방식은 과목명에 따옴표가 들어가면 깨지고, SQL 인젝션 공격에도 뚫린다.
 """
+import sqlite3
+
+def connect(db_path) -> sqlite3.Connection:
+    """DB파일에 연결, 결과를 이름으로 꺼낼 수 있게함. 외래키 검사 ON"""
+    conn = sqlite3.connect(db_path)
+    conn.row_factory = sqlite3.Row
+    conn.execute("PRAGMA foreign_keys = ON")
+    return conn

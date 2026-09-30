@@ -35,3 +35,27 @@ app/config.py — 설정값 모음  [1주차에 채움]
     - 이 파일에는 함수나 Flask 코드를 넣지 않는다. scripts/*.py도 이 파일을 import한다.
     - 비밀번호·개인 키 같은 진짜 비밀 값은 코드에 적지 말고 환경변수로 받는다.
 """
+import os
+from datetime import timedelta
+from pathlib import Path
+
+# ── 경로 ─────────────────────────────────────────────
+# 이 파일 위치(backend/app/config.py)에서 두 단계 위 = backend 폴더
+BASE_DIR = Path(__file__).resolve().parent.parent
+DB_PATH = BASE_DIR / "data" / "processed" / "sugang.db"
+RAW_DIR = BASE_DIR / "data" / "raw"
+FRONTEND_DIR = BASE_DIR.parent / "frontend"
+
+# ── 학기 ─────────────────────────────────────────────
+# 화면 헤더 "2026-2학기 기준", 검색·담기 대상 학기. offerings.csv의 semester와 같아야 한다.
+CURRENT_SEMESTER = "2026-2"
+
+# ── 세션 (로그인 없이 브라우저마다 내 시간표 구분) ─────────
+SECRET_KEY = os.environ.get("SECRET_KEY", "dev-only-change-me")
+PERMANENT_SESSION_LIFETIME = timedelta(days=180)
+
+# ── 화면·데이터 규칙 ─────────────────────────────────
+CATEGORIES = ["전공필수", "전공선택", "교양"]
+TIMETABLE_DAYS = ["월", "화", "수", "목", "금"]
+TIMETABLE_START = "09:00"
+TIMETABLE_END = "19:00"
