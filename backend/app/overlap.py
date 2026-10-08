@@ -48,3 +48,67 @@ app/overlap.py — 수업 시간 문자열 처리와 시간 겹침 판단
         target의 칸 하나라도 겹치는 과목의 이름을 목록으로 돌려준다. 없으면 [].
         models.add_to_cart()가 담기 전에, models.search_offerings()가 "시간 겹침" 표시를 정할 때 쓴다.
 """
+
+import re # 정규식 모듈
+
+DAY_ORDER = "월화수목금토일"
+# 요일 한 글자 + 시:분 - 시:분  (시는 1~2자리, 분은 2자리)
+_SLOT_PATTERN = re.compile(r"^([월화수목금토일])([0-9]{1,2}):([0-9]{2})-([0-9]{1,2}):([0-9]{2})$")
+EXAMPLE = "예: 화11:00-12:00"
+
+
+def _to_clock(hour, minute, piece):
+    """("9", "00") → "09:00". 없는 시각이면 ValueError."""
+    hour, minute = int(hour), int(minute)
+    if not (0 <= hour <= 23 and 0 <= minute <= 59):
+        raise ValueError(f'"{piece}"에 없는 시각이 있습니다 ({EXAMPLE})')
+    return f"{hour:02d}:{minute:02d}"
+
+
+def parse_day_time(text):
+    """"화11:00-12:00,목11:00-12:00" → 수업 시간 칸 목록. 형식이 틀리면 ValueError."""
+    text = (text or "").strip()
+    if not text:
+        return []  # 시간 미정
+
+    slots = []
+    for piece in text.split(","):
+        piece = "".join(piece.split())  # 공백 모두 제거: "월 9:00-10:30" → "월9:00-10:30"
+        if not piece:
+            raise ValueError(f'쉼표 사이에 빈 칸이 있습니다 ({EXAMPLE})')
+
+        match = _SLOT_PATTERN.match(piece)
+        if not match:
+            raise ValueError(f'"{piece}" 형식 오류 ({EXAMPLE})')
+
+        day, start_h, start_m, end_h, end_m = match.groups()
+        start = _to_clock(start_h, start_m, piece)
+        end = _to_clock(end_h, end_m, piece)
+        if start >= end:
+            raise ValueError(f'"{piece}" 시작 시각이 끝 시각보다 같거나 늦습니다 ({EXAMPLE})')
+
+        slots.append({"day": day, "start": start, "end": end})
+    return slots
+
+
+def format_day_time(slots):
+    """parse_day_time의 반대. 요일 순(월→일), 같은 요일이면 시작 시각 순으로 이어 붙인다."""
+    ordered = sorted(slots, key=lambda s: (DAY_ORDER.index(s["day"]), s["start"]))
+    return ",".join(f'{s["day"]}{s["start"]}-{s["end"]}' for s in ordered)
+
+
+def slots_overlap(a, b):
+    """같은 요일이고 시간이 조금이라도 겹치면 True. 끝과 시작이 맞닿기만 하면 False."""
+    return a["day"] == b["day"] and a["start"] < b["end"] and b["start"] < a["end"]
+
+'''
+def find_conflicts(target, others):
+    """target(담으려는 과목의 칸들)과 겹치는 과목 이름 목록.
+
+    others = {"기계학습": [칸, ...], "데이터베이스": [칸, ...]}  (이미 담긴 과목 이름 → 칸들)
+    """
+    return [
+        name for name, slots in others.items()
+        if any(slots_overlap(t, s) for t in target for s in slots)
+    ]
+'''
