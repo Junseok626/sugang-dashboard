@@ -116,3 +116,24 @@ def db(db_path):
     conn = connect(db_path)
     yield conn
     conn.close()
+
+# ── 2주차 ──────────────────────────────────────────────
+
+
+# ── 3주차 ──────────────────────────────────────────────
+@pytest.fixture
+def app(seeded_db_path):
+    """샘플 DB를 쓰는 테스트용 Flask 앱."""
+    from app import create_app
+
+    return create_app({
+        "TESTING": True,
+        "DB_PATH": str(seeded_db_path),
+        "CURRENT_SEMESTER": SEMESTER,
+    })
+
+
+@pytest.fixture
+def client(app):
+    """서버를 켜지 않고 API를 부르는 가짜 브라우저. test_client() 하나 = 브라우저 하나."""
+    return app.test_client()
