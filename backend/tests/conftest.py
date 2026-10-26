@@ -116,3 +116,37 @@ def db(db_path):
     conn = connect(db_path)
     yield conn
     conn.close()
+
+
+from pathlib import Path
+
+import pytest
+
+from scripts.init_db import import_all
+
+@pytest.fixture
+def sample_raw_dir(tmp_path) -> Path:
+    raw = tmp_path / "raw"
+    raw.mkdir()
+    (raw / "courses.csv").write_text(COURSES_CSV, encoding="utf-8")
+    (raw / "offerings.csv").write_text(OFFERINGS_CSV, encoding="utf-8")
+    (raw / "reviews.csv").write_text(REVIEWS_CSV, encoding="utf-8")
+    return raw
+
+
+@pytest.fixture
+def seeded_db_path(db_path, sample_raw_dir) -> Path:
+    conn = connect(db_path)
+    try:
+        import_all(conn, sample_raw_dir, "2026-09-20", "2026-2")
+        conn.commit()
+    finally:
+        conn.close()
+    return db_path
+
+@pytest.fixture
+def seeded_db(seeded_db_path):
+    """빈 임시 DB 연결. 테스트가 끝나면 닫는다."""
+    conn = connect(seeded_db_path)
+    yield conn
+    conn.close()
