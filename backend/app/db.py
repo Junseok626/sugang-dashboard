@@ -41,3 +41,23 @@ def connect(db_path) -> sqlite3.Connection:
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA foreign_keys = ON")
     return conn
+
+def get_db() -> sqlite3.Connection:
+    """flask.g에 연결이 없으면 connect()로 만들어 넣고, 이미 있으면 그대로 돌려준다."""
+    from flask import g, current_app
+    if "db" not in g:
+        g.db = connect(current_app.config["DB_PATH"])
+    return g.db
+
+def close_db(e=None) -> None:
+    """flask.g에서 연결을 꺼내서 닫는다. 없으면 아무 일도 안 한다."""
+    from flask import g
+    db = g.pop("db", None)
+    if db is not None:
+        db.close()
+
+def init_app(app) -> None:
+    """Flask 애플리케이션에 DB 초기화 함수를 등록한다."""
+    app.teardown_appcontext(close_db)
+
+    

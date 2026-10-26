@@ -51,3 +51,62 @@ app/routes.py — API 주소(엔드포인트) 목록  [3주차: 조회 / 4주차
     - body는 request.get_json(silent=True) or {} 로 읽는다 (JSON이 아니어도 서버가 죽지 않게).
     - dict를 return하면 Flask가 자동으로 JSON으로 바꿔 준다. 상태 코드는 return 값, 201 처럼 붙인다.
 """
+import re
+from flask import Blueprint, current_app, request, session
+
+from . import models
+from .db import get_db
+
+bp = Blueprint("api", __name__, url_prefix="/api")
+
+NOT_FOUND = "존재하지 않는 과목입니다."
+SEMESTER_PATTERN = re.compile(r"^[0-9]{4}-[12]$")  # "YYYY-1" 또는 "YYYY-2"
+
+def current_session_id():
+    """이 브라우저의 세션 ID (app/__init__.py의 before_request가 만들어 둠)."""
+    return session["sid"]
+
+
+def current_semester():
+    return current_app.config["CURRENT_SEMESTER"]
+
+
+def error(message, status):
+    return {"error": message}, status
+
+@bp.get("/meta")
+def meta():
+    """A-1. 헤더 정보"""
+    return models.get_meta(get_db(), current_semester())
+
+
+@bp.get("/courses")
+def courses():
+    """A-2. 과목 검색  예) /api/courses?q=데이터&category=전공필수&day=월&credit=3&min_rating=3.5"""
+    args = request.args
+    try:
+        credit = int(args["credit"]) if args.get("credit") else None
+        min_rating = float(args["min_rating"]) if args.get("min_rating") else None
+    except ValueError:
+        return error("학점과 최소 평점은 숫자로 보내 주세요.", 400)
+
+    items = models.search_offerings(
+        get_db(),
+        current_semester(),
+        session_id=current_session_id(),
+        q=args.get("q", ""),
+        categories=args.getlist("category"),   # ?category=전공필수&category=교양 → 두 개
+        days=args.getlist("day"),
+        credit=credit,
+        min_rating=min_rating,
+    )
+    return {"count": len(items), "courses": items}
+
+
+@bp.get("/courses/<int:offering_id>")
+def course_detail(offering_id):
+    """A-3. 과목 상세"""
+    item = models.get_offering_detail(get_db(), offering_id, current_session_id())
+    if item is None:
+        return error(NOT_FOUND, 404)
+    return item

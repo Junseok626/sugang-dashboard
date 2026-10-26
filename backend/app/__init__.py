@@ -47,3 +47,58 @@ app/__init__.py — Flask 앱 조립  [3주차에 채움, 4주차에 세션 부�
     tests/conftest.py의 app 픽스처가 create_app(...)으로 앱을 만들고,
     tests/test_api.py가 통과하면 된다.
 """
+from flask import Flask, session, request
+import uuid
+from . import config, db
+from .routes import bp
+
+def create_app(test_config: dict | None = None) -> "Flask":
+    """Flask 앱을 만들고 설정, DB, 라우트, 오류 처리 등을 등록한다."""
+
+    # 1. 앱 만들기 — frontend/ 폴더를 정적 파일 폴더로 지정
+    app = Flask(__name__, static_folder=str(config.FRONTEND_DIR), static_url_path="")
+
+    # 2. 설정 읽기
+    app.config.from_object(config)
+    if test_config:
+        app.config.update(test_config)
+
+    # 3. db.init_app(app) — 요청이 끝날 때 DB 연결을 닫도록 등록
+    db.init_app(app)
+
+    # 4. from .routes import bp → app.register_blueprint(bp)
+    app.register_blueprint(bp)
+
+    # 5. "/" 주소 → frontend/index.html 돌려주기
+    @app.get("/")
+    def index():
+        return app.send_static_file("index.html")
+
+    # 6. [4주차] 브라우저 구분용 세션 ID 만들기
+    @app.before_request
+    def ensure_session_id():
+        if "sid" not in session:
+            session["sid"] = uuid.uuid4().hex
+            session.permanent = True     # PERMANENT_SESSION_LIFETIME(180일) 동안 유지
+
+    # 7. /api 로 시작하는 주소의 404·405·500 오류를 JSON으로 바꾸기
+    @app.errorhandler(404)
+    def handle_404(e):
+        if request.path.startswith("/api"):
+            return {"error": "요청한 주소를 찾을 수 없습니다."}, 404
+        return e
+
+    @app.errorhandler(405)
+    def handle_405(e):
+        if request.path.startswith("/api"):
+            return {"error": "허용되지 않는 HTTP 메서드입니다."}, 405
+        return e
+
+    @app.errorhandler(500)
+    def handle_500(e):
+        if request.path.startswith("/api"):
+            return {"error": "서버에서 알 수 없는 오류가 발생했습니다."}, 500
+        return e
+
+    # 8. return app
+    return app
