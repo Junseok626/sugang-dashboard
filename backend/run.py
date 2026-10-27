@@ -24,3 +24,7 @@ run.py — 서버를 켜는 파일  [3주차에 채움]
     서버를 켠 뒤 브라우저에서 http://localhost:5000/api/meta 를 열었을 때 JSON이 보이면 성공.
     macOS에서 5000번 포트가 이미 쓰이고 있다는 오류가 나면 port=5001로 바꾼다.
 """
+from app import create_app
+app = create_app()
+if __name__ == "__main__":
+    app.run(debug=True, port=5000)

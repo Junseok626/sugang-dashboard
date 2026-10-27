@@ -33,4 +33,8 @@ git push -u origin feature/login
 
 # 6. Pull Request 생성
 gh pr create --base main --title "로그인 기능 구현" --body "로그인 기능 구현했습니다"
+
+# 7. merge후 브랜치 삭제까지
+merge 한 이후 vscode에서 git pull origin main (최신 상태로 업데이트)
+git branch -d feature/login
 ```
