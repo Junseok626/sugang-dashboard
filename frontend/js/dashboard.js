@@ -289,7 +289,7 @@ async function loadMeta() {
   const retry = document.getElementById("meta-retry");
   retry.hidden = true;
   try {
-    const meta = await window.apiu.getMeta();
+    const meta = await window.api.getMeta();
     semester.removeAttribute("title");
     semester.textContent = `${meta.semester}학기 기준`;
     badge.hidden = !meta.last_updated;

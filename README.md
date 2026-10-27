@@ -10,8 +10,8 @@ VS CODE에서 웹 확인하기
 ```
 python -m http.server 5510 --directory C:/Users/user/Documents/sugang-dashboard/frontend
 ```
-Serving HTTP on :: port 5510 나오면
-http://172.17.89.18:5510 접속
+'backend' 폴더에서 python run.py를 터미널에 입력.
+http://localhost:5000 접속.
 
 엑셀 파일 저장할 때 CSV-UTF8 파일로 저장.
 ```
