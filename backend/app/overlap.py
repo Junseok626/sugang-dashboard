@@ -101,7 +101,7 @@ def slots_overlap(a, b):
     """같은 요일이고 시간이 조금이라도 겹치면 True. 끝과 시작이 맞닿기만 하면 False."""
     return a["day"] == b["day"] and a["start"] < b["end"] and b["start"] < a["end"]
 
-'''
+
 def find_conflicts(target, others):
     """target(담으려는 과목의 칸들)과 겹치는 과목 이름 목록.
 
@@ -111,4 +111,3 @@ def find_conflicts(target, others):
         name for name, slots in others.items()
         if any(slots_overlap(t, s) for t in target for s in slots)
     ]
-'''
