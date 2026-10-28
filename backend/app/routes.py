@@ -16,17 +16,6 @@ app/routes.py — API 주소(엔드포인트) 목록  [3주차: 조회 / 4주차
 
     DB 연결은 db.get_db(), 이번 학기는 current_app.config["CURRENT_SEMESTER"]로 얻는다.
 
-    [4주차]
-    GET    /api/cart                         → models.get_cart
-               응답: {"semester": ..., "total_credit": 학점 합, "items": [...]}
-    POST   /api/cart     body {"offering_id": 3}
-                                              → models.add_to_cart
-               성공 201 {"ok": true}
-               offering_id가 없거나 숫자가 아님 → 400
-               LookupError → 404 {"error": "존재하지 않는 과목입니다."}
-               CartError   → 409 {"error": e.message, "reason": e.reason, "conflicts": e.conflicts}
-    DELETE /api/cart/<int:offering_id>       → models.remove_from_cart, False면 404
-
     [5주차]
     POST   /api/courses/<int:offering_id>/reviews
                body {"rating": 5, "comment": "...", "taken_semester": "2026-1"}
