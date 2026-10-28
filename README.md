@@ -8,10 +8,19 @@
 VS CODE에서 웹 확인하기
 터미널에서 이 명령어 실행
 ```
-python -m http.server 5510 --directory C:/Users/user/Documents/sugang-dashboard/frontend
-```
-'backend' 폴더에서 python run.py를 터미널에 입력.
+처음 한번만. 파이썬 가상환경 켜기.
+cd sugang-dashboard
+python -m venv .venv
+.venv\Scripts\Activate.ps1
+pip install -r backend/requirements.txt
+
+이후 백엔드 폴더로 이동 후 python run.py
 http://localhost:5000 접속.
+
+가상환경 끌 때 deactivate
+```
+
+
 
 엑셀 파일 저장할 때 CSV-UTF8 파일로 저장.
 ```
