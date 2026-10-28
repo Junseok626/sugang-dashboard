@@ -16,15 +16,6 @@ app/routes.py — API 주소(엔드포인트) 목록  [3주차: 조회 / 4주차
 
     DB 연결은 db.get_db(), 이번 학기는 current_app.config["CURRENT_SEMESTER"]로 얻는다.
 
-    [3주차]
-    GET    /api/meta                         → models.get_meta
-    GET    /api/courses                      → models.search_offerings
-               쿼리스트링: q, category(여러 개), day(여러 개), credit, min_rating
-               여러 개인 값은 request.args.getlist("category")로 읽는다.
-               credit은 int, min_rating은 float로 바꾸고, 바꿀 수 없으면 400.
-               응답: {"count": 개수, "courses": [...]}
-    GET    /api/courses/<int:offering_id>    → models.get_offering_detail, None이면 404
-
     [4주차]
     GET    /api/cart                         → models.get_cart
                응답: {"semester": ..., "total_credit": 학점 합, "items": [...]}
@@ -110,3 +101,40 @@ def course_detail(offering_id):
     if item is None:
         return error(NOT_FOUND, 404)
     return item
+
+# ── 4주차: 담기 (내 시간표) ─────────────────────────────
+@bp.get("/cart")
+def cart():
+    """A-5. 내 시간표"""
+    items = models.get_cart(get_db(), current_session_id(), current_semester())
+    return {
+        "semester": current_semester(),
+        "total_credit": sum(item["credit"] for item in items),
+        "items": items,
+    }
+
+
+@bp.post("/cart")
+def add_to_cart():
+    """A-6. 담기  body: {"offering_id": 3}"""
+    body = request.get_json(silent=True) or {}
+    offering_id = body.get("offering_id")
+    # bool은 int의 일종이라 True가 1로 통과하지 않도록 따로 막는다
+    if not isinstance(offering_id, int) or isinstance(offering_id, bool):
+        return error("offering_id를 숫자로 보내 주세요.", 400)
+
+    try:
+        models.add_to_cart(get_db(), current_session_id(), offering_id, current_semester())
+    except LookupError:
+        return error(NOT_FOUND, 404)
+    except models.CartError as e:
+        return {"error": e.message, "reason": e.reason, "conflicts": e.conflicts}, 409
+    return {"ok": True}, 201
+
+
+@bp.delete("/cart/<int:offering_id>")
+def remove_from_cart(offering_id):
+    """A-7. 빼기"""
+    if not models.remove_from_cart(get_db(), current_session_id(), offering_id):
+        return error("담겨 있지 않은 과목입니다.", 404)
+    return {"ok": True}
