@@ -8,19 +8,6 @@ tests/test_api.py — API 검사  [3주차: 조회 / 4주차: 담기 / 5주차: 
 응답 모양은 로드맵.md "부록 A. API 명세"와 같아야 한다.
 
 채울 테스트
-    [4주차]
-    test_cart_empty            처음 /api/cart → items [], total_credit 0
-    test_cart_add_and_list     담기 → 201, /api/cart에 보이고 total_credit이 학점 합과 같은지
-    test_cart_duplicate        같은 과목 두 번 → 409, reason "already_in_cart"
-    test_cart_same_course      같은 과목 다른 분반 → 409, reason "same_course"
-    test_cart_time_conflict    시간 겹치는 과목 → 409, reason "time_conflict", conflicts에 담긴 과목 이름
-    test_cart_no_time_ok       시간 미정 과목은 겹침 없이 담기는지
-    test_cart_not_found        없는 offering_id → 404
-    test_cart_bad_body         body 없음 / offering_id가 "abc" → 400
-    test_cart_remove           빼기 → 200, 한 번 더 빼면 404
-    test_cart_is_per_session   app.test_client()를 두 개 만들어, 한쪽에서 담은 과목이 다른 쪽 /api/cart에 안 보이는지
-    test_search_flags          담은 뒤 /api/courses에서 담은 과목 in_cart True, 겹치는 과목 conflict True
-
     [5주차]
     test_review_create         작성 → 201, 상세의 reviews 맨 앞에 보이고 review_count·avg_rating이 바뀌는지
     test_review_shared_by_professor
@@ -46,6 +33,7 @@ tests/test_api.py — API 검사  [3주차: 조회 / 4주차: 담기 / 5주차: 
     6 캡스톤디자인 CSE405-01 (미정, 시간 미정, 강의평 없음)
     7 글쓰기와소통 GEN101-01 (최OO, 금 09-11, 2학점, 강의평 없음)
 """
+from app.db import connect
 
 COURSE_KEYS = {
     "offering_id", "course_code", "course_name", "professor", "credit", "category",
@@ -191,3 +179,145 @@ def test_unknown_api_404(client):
     res = client.get("/api/없는주소")
     assert res.status_code == 404
     assert "error" in res.get_json()
+
+# ── 4주차: 담기 (내 시간표) ─────────────────────────────
+def add(client, offering_id):
+    """담기 요청을 보내고 응답을 돌려준다."""
+    return client.post("/api/cart", json={"offering_id": offering_id})
+
+
+def cart(client):
+    res = client.get("/api/cart")
+    assert res.status_code == 200
+    return res.get_json()
+
+
+def test_cart_empty(client):
+    assert cart(client) == {"semester": "2026-2", "total_credit": 0, "items": []}
+
+
+def test_cart_add_and_list(client):
+    for offering_id in (2, 1, 7):  # 데이터베이스(3), 기계학습(3), 글쓰기와소통(2)
+        res = add(client, offering_id)
+        assert res.status_code == 201
+        assert res.get_json() == {"ok": True}
+
+    data = cart(client)
+    assert [item["offering_id"] for item in data["items"]] == [2, 1, 7]  # 담은 순서
+    assert data["total_credit"] == 8
+    assert set(data["items"][0]) == {
+        "offering_id", "course_code", "course_name", "professor", "credit",
+        "category", "classroom", "day_time", "slots",
+    }
+
+
+def test_cart_duplicate(client):
+    add(client, 1)
+    res = add(client, 1)
+    assert res.status_code == 409
+    assert res.get_json() == {
+        "error": "이미 담은 과목입니다.", "reason": "already_in_cart", "conflicts": [],
+    }
+
+
+def test_cart_same_course(client):
+    add(client, 2)                 # 데이터베이스 01반
+    res = add(client, 3)           # 데이터베이스 02반 (시간은 안 겹침)
+    assert res.status_code == 409
+    assert res.get_json() == {
+        "error": "같은 과목의 다른 분반이 이미 담겨 있습니다.", "reason": "same_course", "conflicts": [],
+    }
+
+
+def test_cart_time_conflict(client):
+    add(client, 1)                 # 기계학습 화·목 11-12
+    res = add(client, 4)           # 데이터시각화 화·목 11-12
+    assert res.status_code == 409
+    assert res.get_json() == {
+        "error": '"데이터시각화"는 담긴 과목 "기계학습"과 시간이 겹쳐 담을 수 없습니다.',
+        "reason": "time_conflict",
+        "conflicts": ["기계학습"],
+    }
+    assert [item["offering_id"] for item in cart(client)["items"]] == [1]  # 거절된 과목은 안 담김
+
+
+def test_cart_no_time_ok(client):
+    add(client, 1)
+    assert add(client, 6).status_code == 201  # 캡스톤디자인 (시간 미정) → 겹침 없음
+
+
+def test_cart_not_found(client):
+    res = add(client, 999)
+    assert res.status_code == 404
+    assert res.get_json() == {"error": "존재하지 않는 과목입니다."}
+
+
+def test_cart_other_semester(app, client):
+    # 이번 학기(2026-2)가 아닌 개설 과목은 없는 과목으로 취급한다
+    conn = connect(app.config["DB_PATH"])
+    other_id = conn.execute(
+        "INSERT INTO course_offering (course_id, professor_id, semester, section)"
+        " VALUES (1, 1, '2026-1', '01')"
+    ).lastrowid
+    conn.commit()
+    conn.close()
+
+    res = add(client, other_id)
+    assert res.status_code == 404
+    assert res.get_json() == {"error": "존재하지 않는 과목입니다."}
+
+
+def test_cart_bad_body(client):
+    bad_requests = [
+        client.post("/api/cart", json={}),                     # offering_id 없음
+        client.post("/api/cart", json={"offering_id": "abc"}),  # 글자
+        client.post("/api/cart", json={"offering_id": "1"}),    # 숫자처럼 보이는 글자
+        client.post("/api/cart", json={"offering_id": True}),   # True는 1로 통과하면 안 됨
+        client.post("/api/cart", data="1"),                     # JSON이 아님
+    ]
+    for res in bad_requests:
+        assert res.status_code == 400
+        assert res.get_json() == {"error": "offering_id를 숫자로 보내 주세요."}
+    assert cart(client)["items"] == []
+
+
+def test_cart_remove(client):
+    add(client, 1)
+    res = client.delete("/api/cart/1")
+    assert res.status_code == 200
+    assert res.get_json() == {"ok": True}
+    assert cart(client)["items"] == []
+
+    res = client.delete("/api/cart/1")  # 이미 뺀 과목
+    assert res.status_code == 404
+    assert res.get_json() == {"error": "담겨 있지 않은 과목입니다."}
+
+
+def test_cart_remove_then_add_again(client):
+    add(client, 1)
+    client.delete("/api/cart/1")
+    assert add(client, 4).status_code == 201  # 기계학습을 뺐으니 데이터시각화가 담김
+
+
+def test_cart_is_per_session(app, client):
+    other = app.test_client()  # 다른 브라우저
+    add(client, 1)
+    assert cart(other)["items"] == []
+    assert add(other, 4).status_code == 201   # 다른 브라우저에서는 겹침 아님
+    assert [i["offering_id"] for i in cart(client)["items"]] == [1]
+
+
+def test_search_flags(client):
+    add(client, 1)  # 기계학습
+    flags = {c["offering_id"]: (c["in_cart"], c["conflict"]) for c in get_courses(client)}
+    assert flags[1] == (True, False)    # 담은 과목
+    assert flags[4] == (False, True)    # 데이터시각화: 시간 겹침
+    assert flags[6] == (False, False)   # 시간 미정: 겹침 없음
+    assert sum(in_cart for in_cart, _ in flags.values()) == 1
+    assert sum(conflict for _, conflict in flags.values()) == 1
+
+
+def test_detail_flags(client):
+    add(client, 1)
+    assert client.get("/api/courses/1").get_json()["in_cart"] is True
+    assert client.get("/api/courses/4").get_json()["conflict"] is True

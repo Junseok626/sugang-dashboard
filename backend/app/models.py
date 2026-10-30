@@ -169,20 +169,7 @@ def get_offering_detail(db, offering_id, session_id=None):
     ]
     return item
 
-def get_cart(db, session_id, semester):
-    # 이 브라우저가 담은 이번 학기 과목, 담은 순서대로.
-    rows = db.execute(
-        _OFFERING_SELECT
-        + " JOIN cart_item ci ON ci.offering_id = o.offering_id"
-          " WHERE ci.session_id = ? AND o.semester = ?"
-          " ORDER BY ci.added_at, ci.cart_id",
-        (session_id, semester),
-    ).fetchall()
-    slots_by_id = _load_slots(db, [row["offering_id"] for row in rows])
-    return [_base_item(row, slots_by_id[row["offering_id"]]) for row in rows]
-
 # ── 4주차: 담기 (내 시간표) ─────────────────────────────
-"""
 class CartError(Exception):
     # 담기를 거절할 때 쓰는 예외. routes.py가 409로 바꾼다.
 
@@ -261,7 +248,7 @@ def remove_from_cart(db, session_id, offering_id):
     db.commit()
     return cursor.rowcount > 0
 
-
+"""
 # ── 5주차: 강의평 ───────────────────────────────────────
 def add_review(db, offering_id, rating, comment, taken_semester):
     # 강의평 저장 (과목 + 교수 단위). 새 review_id를 돌려준다. 입력값 검사는 routes.py에서.
