@@ -1,5 +1,14 @@
 /* Figma 변수(Dashboard Colors) → CSS 변수 */
 :root {
+  --block-1: #3a6ea5;
+  --block-2: #dd6630;
+  --block-3: #7b4fc4;
+  /* 4~6은 추가 과목 구분용 보완 색상. Figma에서 확인한 색은 1~3입니다. */
+  --block-4: #318064;
+  --block-5: #397c91;
+  --block-6: #b05272;
+
+
   --color-primary: #2f5597;
   --color-primary-subtle: #edf0f7;
   --color-bg-app: #f3f1ec;
@@ -352,3 +361,60 @@ button, input, select { font: inherit; color: inherit; }
 #tab-timetable[hidden] {
   display: none;
 }
+/* ---------- Full timetable (Figma 18:391 / 18:503) ---------- */
+.timetable-page { gap: 24px; padding: 28px; overflow-y: auto; align-items: flex-start; }
+.timetable-card {
+  flex: 1; min-width: 0; min-height: 100%; padding: 24px;
+  background: var(--color-surface); border: 1px solid var(--color-border); border-radius: 16px;
+}
+.timetable-card__header { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 16px; }
+.timetable-card__title { margin: 0; font-size: 18px; font-weight: 700; }
+.timetable-card__summary { margin: 4px 0 0; font-size: 12px; color: var(--color-text-muted); }
+.timetable-action {
+  display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;
+  height: 36px; padding: 0 16px; border-radius: 8px; background: var(--color-primary);
+  color: var(--color-text-on-primary); font-size: 13px; font-weight: 700; text-decoration: none;
+}
+.timetable-action:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 3px; }
+.week-grid {
+  --time-label-width: 56px; --day-header-height: 34px; --half-hour-height: 26px;
+  position: relative; border: 1px solid var(--color-border); overflow: hidden;
+}
+.week-grid__cells {
+  display: grid; grid-template-columns: var(--time-label-width) repeat(5, minmax(0, 1fr));
+  grid-template-rows: var(--day-header-height) repeat(20, var(--half-hour-height));
+}
+.week-grid__head, .week-grid__time, .week-grid__cell { border-right: 1px solid var(--color-border); border-bottom: 1px solid var(--color-border); }
+.week-grid__head { display: flex; align-items: center; justify-content: center; font-size: 12px; background: var(--color-surface-subtle); }
+.week-grid__time { padding-top: 4px; text-align: center; font-size: 11px; color: var(--color-text-muted); background: var(--color-surface-subtle); }
+.week-grid__cell { background: var(--color-surface); }
+.timetable-block {
+  position: absolute; width: calc((100% - var(--time-label-width)) / 5);
+  display: flex; flex-direction: column; gap: 3px; padding: 8px; overflow: hidden;
+  color: var(--color-text-on-primary); border-right: 1px solid var(--color-surface); border-bottom: 1px solid var(--color-surface);
+}
+.timetable-block__name { font-size: 12px; font-weight: 700; }
+.timetable-block__room { font-size: 10px; opacity: .9; }
+.timetable-block__name, .timetable-block__room { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex-shrink: 0; }
+.timetable-panel {
+  display: flex; flex-direction: column; gap: 12px; width: 300px; flex-shrink: 0; padding: 20px;
+  border: 1px solid var(--color-border); border-radius: 16px; background: var(--color-surface);
+}
+.timetable-panel h2 { margin: 0; font-size: 14px; font-weight: 700; }
+.timetable-total { display: flex; justify-content: space-between; align-items: center; padding-top: 12px; border-top: 1px solid var(--color-border); font-size: 13px; color: var(--color-text-muted); }
+.timetable-total strong { font-size: 14px; color: var(--color-text); }
+.timetable-list__empty { padding: 24px 8px; border-radius: 8px; text-align: center; font-size: 12px; background: var(--color-surface-subtle); color: var(--color-text-muted); }
+.timetable-empty {
+  position: absolute; z-index: 1; left: 50%; top: 50%; transform: translate(-50%, -50%);
+  display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 28px 32px;
+  border: 1px solid var(--color-border); border-radius: 12px; background: var(--color-surface);
+  box-shadow: 0 6px 20px rgb(0 0 0 / 8%); white-space: nowrap;
+}
+.timetable-empty[hidden], .timetable-status[hidden] { display: none; }
+.timetable-empty__icon { width: 40px; height: 40px; border-radius: 10px; background: var(--color-primary-subtle); }
+.timetable-empty h3 { margin: 0; font-size: 16px; }
+.timetable-empty p { margin: 0; font-size: 13px; color: var(--color-text-muted); }
+.timetable-empty .timetable-action { height: 40px; }
+.timetable-status { padding: 12px; border: 1px solid var(--color-warn-border); border-radius: 6px; background: var(--color-warn-bg); color: var(--color-warn-text); font-size: 12px; }
+.timetable-status p { margin: 0 0 8px; }
+.timetable-panel .cart-card__remove:disabled { cursor: wait; opacity: .5; }
