@@ -14,23 +14,60 @@
     <header class="header">
       <div class="brand">
         <div class="brand__logo" aria-hidden="true"></div>
-        <h1 class="brand__title">웹 이름</h1>
+        <h1 class="brand__title">수강신청 비교 대시보드</h1>
       </div>
 
-      <form class="search" id="search-form" role="search">
-        <input class="search__input" id="search-input" type="search" placeholder="과목명, 교수명으로 검색" aria-label="과목명, 교수명으로 검색">
-        <button class="search__button" type="submit">검색</button>
-      </form>
+      <nav class="header-tabs" aria-label="주요 메뉴">
+        <a class="header-tabs__link" href="#timetable">내 시간표</a>
+        <a class="header-tabs__link" href="#search">과목 찾기</a>
+      </nav>
 
       <div class="meta">
         <span id="meta-semester">학기 정보를 불러오는 중…</span>
         <span class="meta__badge" id="meta-updated" hidden></span>
-        <button class="btn-add" id="meta-retry"type="button" hidden>다시 시도</button>
+        <button class="btn-add" id="meta-retry" type="button" hidden>다시 시도</button>
       </div>
     </header>
     <section id="tab-timetable" aria-label="내 시간표" hidden>
+      <div class="body timetable-page">
+        <div class="timetable-card">
+          <div class="timetable-card__header">
+            <div>
+              <h2 class="timetable-card__title">내 시간표</h2>
+              <p class="timetable-card__summary" id="timetable-summary" role="status"></p>
+            </div>
+            <a class="timetable-action" href="#search">+ 과목 추가</a>
+          </div>
+
+          <div class="timetable-status" id="timetable-status" role="alert" hidden>
+            <p id="timetable-error"></p>
+            <button class="btn-add" id="timetable-retry" type="button">다시 시도</button>
+          </div>
+
+          <div class="week-grid">
+            <div class="week-grid__cells" id="week-grid-cells"></div>
+            <div id="week-grid-blocks"></div>
+            <div class="timetable-empty" id="timetable-empty" hidden>
+              <div class="timetable-empty__icon" aria-hidden="true"></div>
+              <h3>아직 담은 과목이 없어요</h3>
+              <p>과목을 찾아 시간표에 넣어보세요</p>
+              <a class="timetable-action" href="#search">과목 찾아보기</a>
+            </div>
+          </div>
+        </div>
+
+        <aside class="timetable-panel" aria-label="담은 과목">
+          <h2 id="timetable-cart-title"></h2>
+          <ul class="cart-list" id="timetable-cart-list"></ul>
+          <div class="timetable-total">
+            <span>총 학점</span>
+            <strong id="timetable-total"></strong>
+          </div>
+        </aside>
+      </div>
     </section>
-    <section id="tab-search" aria-label="과목 찾기"></section>
+
+    <section id="tab-search" aria-label="과목 찾기" hidden>
       <div class="body">
         <aside class="filters" aria-label="필터">
           <fieldset class="filter-group filter-group--tight">
@@ -79,32 +116,37 @@
           </div>
         </aside>
 
-      <main class="results">
-        <p class="results__count" id="result-count" role="status"></p>
-        <div class="course-table" role="table" aria-label="검색 결과">
-          <div class="course-table__head" role="row">
-            <span role="columnheader">과목명</span>
-            <span role="columnheader">교수</span>
-            <span role="columnheader">시간</span>
-            <span role="columnheader">학점</span>
-            <span role="columnheader">평점</span>
-            <span role="columnheader" aria-label="담기"></span>
+        <main class="results">
+          <form class="search" id="search-form" role="search">
+            <input class="search__input" id="search-input" type="search" placeholder="과목명, 교수명으로 검색" aria-label="과목명, 교수명으로 검색">
+            <button class="search__button" type="submit">검색</button>
+          </form>
+          <p class="results__count" id="result-count" role="status"></p>
+          <div class="course-table" role="table" aria-label="검색 결과">
+            <div class="course-table__head" role="row">
+              <span role="columnheader">과목명</span>
+              <span role="columnheader">교수</span>
+              <span role="columnheader">시간</span>
+              <span role="columnheader">학점</span>
+              <span role="columnheader">평점</span>
+              <span role="columnheader" aria-label="담기"></span>
+            </div>
+            <div id="course-rows"></div>
           </div>
-          <div id="course-rows"></div>
-        </div>
-      </main>
+        </main>
 
-      <aside class="my-timetable" aria-label="내 시간표">
-        <h2 class="my-timetable__title" id="cart-title"></h2>
-        <div class="mini-grid" id="mini-grid"></div>
-        <ul class="cart-list" id="cart-list"></ul>
-        <div class="toast" id="conflict-toast" role="status" hidden>
-          <span class="toast__icon"><img src="css/icon-warning.svg" width="10.3923" height="8.25" alt=""></span>
-          <p class="toast__message" id="conflict-message"></p>
-        </div>
-      </aside>
-    </div>
-  </section>
+        <aside class="my-timetable" aria-label="내 시간표">
+          <h2 class="my-timetable__title" id="cart-title"></h2>
+          <div class="mini-grid" id="mini-grid"></div>
+          <ul class="cart-list" id="cart-list"></ul>
+          <div class="toast" id="conflict-toast" role="status" hidden>
+            <span class="toast__icon"><img src="css/icon-warning.svg" width="10.3923" height="8.25" alt=""></span>
+            <p class="toast__message" id="conflict-message"></p>
+          </div>
+        </aside>
+      </div>
+    </section>
+  </div>
 
   <script src="js/api.js"></script>
   <script src="js/timetable.js"></script>
