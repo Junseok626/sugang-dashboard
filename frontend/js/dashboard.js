@@ -290,9 +290,9 @@ function bindFilters() {
 
 async function loadCart() {
   try {
-  const cart = await window.api.getCart();
-  renderMiniGrid();
-  renderCart();
+    const cart = await window.api.getCart();
+    state.cart = cart.items;
+    render();
   } catch (error) {
     state.cartMessage = error.message;
     renderToast(state.courses);
