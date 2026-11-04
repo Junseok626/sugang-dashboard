@@ -25,60 +25,62 @@
       <div class="meta">
         <span id="meta-semester">학기 정보를 불러오는 중…</span>
         <span class="meta__badge" id="meta-updated" hidden></span>
-        <button class="btn-add" id="meta-retry" type="button" hidden>다시 시도</button>
+        <button class="btn-add" id="meta-retry"type="button" hidden>다시 시도</button>
       </div>
     </header>
+    <section id="tab-timetable" aria-label="내 시간표" hidden>
+    </section>
+    <section id="tab-search" aria-label="과목 찾기"></section>
+      <div class="body">
+        <aside class="filters" aria-label="필터">
+          <fieldset class="filter-group filter-group--tight">
+            <legend class="filter-group__title">이수구분</legend>
+            <label class="checkbox"><input type="checkbox" name="category" value="전공필수">전공필수</label>
+            <label class="checkbox"><input type="checkbox" name="category" value="전공선택">전공선택</label>
+            <label class="checkbox"><input type="checkbox" name="category" value="교양">교양</label>
+          </fieldset>
 
-    <div class="body">
-      <aside class="filters" aria-label="필터">
-        <fieldset class="filter-group filter-group--tight">
-          <legend class="filter-group__title">이수구분</legend>
-          <label class="checkbox"><input type="checkbox" name="category" value="전공필수">전공필수</label>
-          <label class="checkbox"><input type="checkbox" name="category" value="전공선택">전공선택</label>
-          <label class="checkbox"><input type="checkbox" name="category" value="교양">교양</label>
-        </fieldset>
+          <fieldset class="filter-group">
+            <legend class="filter-group__title">요일</legend>
+            <div class="days" id="day-chips">
+              <button class="day-chip" type="button" data-day="월" aria-pressed="false">월</button>
+              <button class="day-chip" type="button" data-day="화" aria-pressed="false">화</button>
+              <button class="day-chip" type="button" data-day="수" aria-pressed="false">수</button>
+              <button class="day-chip" type="button" data-day="목" aria-pressed="false">목</button>
+              <button class="day-chip" type="button" data-day="금" aria-pressed="false">금</button>
+            </div>
+          </fieldset>
 
-        <fieldset class="filter-group">
-          <legend class="filter-group__title">요일</legend>
-          <div class="days" id="day-chips">
-            <button class="day-chip" type="button" data-day="월" aria-pressed="false">월</button>
-            <button class="day-chip" type="button" data-day="화" aria-pressed="false">화</button>
-            <button class="day-chip" type="button" data-day="수" aria-pressed="false">수</button>
-            <button class="day-chip" type="button" data-day="목" aria-pressed="false">목</button>
-            <button class="day-chip" type="button" data-day="금" aria-pressed="false">금</button>
+          <div class="filter-group">
+            <label class="filter-group__title" for="credit-filter">학점</label>
+            <div class="select">
+              <select id="credit-filter">
+                <option value="">전체</option>
+                <option value="1">1학점</option>
+                <option value="2">2학점</option>
+                <option value="3">3학점</option>
+              </select>
+              <img class="select__chevron" src="css/icon-chevron.svg" width="11.0607" height="6.59099" alt="">
+            </div>
           </div>
-        </fieldset>
 
-        <div class="filter-group">
-          <label class="filter-group__title" for="credit-filter">학점</label>
-          <div class="select">
-            <select id="credit-filter">
-              <option value="">전체</option>
-              <option value="1">1학점</option>
-              <option value="2">2학점</option>
-              <option value="3">3학점</option>
-            </select>
-            <img class="select__chevron" src="css/icon-chevron.svg" width="11.0607" height="6.59099" alt="">
+          <div class="filter-group">
+            <label class="filter-group__title" for="rating-filter">최소 평점</label>
+            <div class="select">
+              <select id="rating-filter">
+                <option value="">전체</option>
+                <option value="3">3.0 이상</option>
+                <option value="3.5">3.5 이상</option>
+                <option value="4">4.0 이상</option>
+                <option value="4.5">4.5 이상</option>
+              </select>
+              <img class="select__chevron" src="css/icon-chevron.svg" width="11.0607" height="6.59099" alt="">
+            </div>
           </div>
-        </div>
-
-        <div class="filter-group">
-          <label class="filter-group__title" for="rating-filter">최소 평점</label>
-          <div class="select">
-            <select id="rating-filter">
-              <option value="">전체</option>
-              <option value="3">3.0 이상</option>
-              <option value="3.5">3.5 이상</option>
-              <option value="4">4.0 이상</option>
-              <option value="4.5">4.5 이상</option>
-            </select>
-            <img class="select__chevron" src="css/icon-chevron.svg" width="11.0607" height="6.59099" alt="">
-          </div>
-        </div>
-      </aside>
+        </aside>
 
       <main class="results">
-        <p class="results__count" id="result-count"></p>
+        <p class="results__count" id="result-count" role="status"></p>
         <div class="course-table" role="table" aria-label="검색 결과">
           <div class="course-table__head" role="row">
             <span role="columnheader">과목명</span>
@@ -102,10 +104,11 @@
         </div>
       </aside>
     </div>
-  </div>
+  </section>
 
-  <script src="js/data.js"></script>
   <script src="js/api.js"></script>
+  <script src="js/timetable.js"></script>
   <script src="js/dashboard.js"></script>
+  <script src="js/app.js"></script>
 </body>
 </html>
