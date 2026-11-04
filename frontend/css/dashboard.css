@@ -47,7 +47,7 @@ button, input, select { font: inherit; color: inherit; }
 .header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  gap: 36px;
   flex-shrink: 0;
   height: 64px;
   padding: 0 24px;
@@ -55,13 +55,34 @@ button, input, select { font: inherit; color: inherit; }
   border-bottom: 1px solid var(--color-border);
 }
 
-.brand { display: flex; align-items: center; gap: 12px; }
+.brand { display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
 .brand__logo { width: 28px; height: 28px; border-radius: 6px; background: var(--color-primary); }
 .brand__title { margin: 0; font-size: 16px; font-weight: 700; }
 
-.search { display: flex; gap: 8px; }
+/* Figma Nav/Tab: 선택된 메뉴는 파란 글자와 2px 밑줄 */
+.header-tabs { display: flex; align-self: stretch; gap: 4px; flex-shrink: 0; }
+.header-tabs__link {
+  display: flex;
+  align-items: center;
+  padding: 0 14px;
+  border-bottom: 2px solid transparent;
+  color: var(--color-text-muted);
+  font-size: 14px;
+  font-weight: 500;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.header-tabs__link[aria-current="page"] {
+  color: var(--color-primary);
+  border-bottom-color: var(--color-primary);
+  font-weight: 700;
+}
+.header-tabs__link:focus-visible { outline: 2px solid var(--color-primary); outline-offset: -4px; }
+
+.search { display: flex; gap: 8px; width: 100%; flex-shrink: 0; }
 .search__input {
-  width: 352px;
+  flex: 1;
+  min-width: 0;
   height: 36px;
   padding: 0 12px;
   font-size: 13px;
@@ -72,6 +93,7 @@ button, input, select { font: inherit; color: inherit; }
 .search__input::placeholder { color: var(--color-text-muted); }
 .search__input:focus { outline: 2px solid var(--color-primary-subtle); border-color: var(--color-primary); }
 .search__button {
+  flex-shrink: 0;
   width: 60px;
   height: 36px;
   font-size: 13px;
@@ -83,7 +105,7 @@ button, input, select { font: inherit; color: inherit; }
   cursor: pointer;
 }
 
-.meta { display: flex; align-items: center; gap: 10px; font-size: 12px; color: var(--color-text-muted); }
+.meta { display: flex; align-items: center; gap: 12px; margin-left: auto; flex-shrink: 0; white-space: nowrap; font-size: 12px; color: var(--color-text-muted); }
 .meta__badge {
   padding: 3px 8px;
   font-size: 11px;
@@ -168,7 +190,7 @@ button, input, select { font: inherit; color: inherit; }
 .results {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 16px;
   flex: 1;
   min-width: 0;
   padding: 20px 24px;
@@ -205,6 +227,8 @@ button, input, select { font: inherit; color: inherit; }
 .course-row:last-child { border-bottom: 0; }
 .course-row__rating { color: var(--color-star); }
 .course-row__rating--conflict { color: var(--color-danger); }
+.course-row__rating--empty { color: var(--color-text-muted); }
+.course-row__name { min-width: 0; padding-right: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .course-table__empty { margin: 0; padding: 24px 12px; font-size: 13px; color: var(--color-text-muted); }
 
 .btn-add {
@@ -289,6 +313,9 @@ button, input, select { font: inherit; color: inherit; }
 }
 .cart-card__text { display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 0; }
 .cart-card__name { font-size: 13px; font-weight: 500; }
+.cart-card__name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cart-list__empty { font-size: 12px; color: var(--color-text-muted); padding: 12px; }
+.status-retry { display: block; margin-top: 12px; }
 .cart-card__meta { font-size: 11px; color: var(--color-text-muted); }
 .cart-card__remove {
   padding: 0;
@@ -313,3 +340,15 @@ button, input, select { font: inherit; color: inherit; }
 .toast[hidden] { display: none; }
 .toast__icon { flex-shrink: 0; width: 12px; height: 11px; padding-left: 0.8px; }
 .toast__message { margin: 0; font-size: 12px; line-height: 1.5; color: var(--color-warn-text); }
+
+#tab-search,
+#tab-timetable {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+
+#tab-search[hidden],
+#tab-timetable[hidden] {
+  display: none;
+}
