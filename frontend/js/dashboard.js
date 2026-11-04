@@ -114,7 +114,7 @@ function renderResults() {
 
   for (const course of visible) {
     const conflict = course.conflict;
-    const inCart = isInCart(course.offering_id);
+    const inCart = course.in_cart;
     const row = el("div", "course-row");
     row.setAttribute("role", "row");
 
@@ -290,9 +290,10 @@ function bindFilters() {
 
 async function loadCart() {
   try {
-    const cart = await window.api.getCart();
-    state.cart = cart.items;
-    render();
+  const cart = await window.api.getCart();
+  state.cart = cart.items;
+  renderMiniGrid();
+  renderCart();
   } catch (error) {
     state.cartMessage = error.message;
     renderToast(state.courses);
