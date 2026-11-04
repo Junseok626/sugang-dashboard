@@ -1,3 +1,5 @@
+// 레이아웃은 유지하고 조회 공급처만 courseSource로 분리합니다.
+// 2주차 담기는 메모리의 과목 객체 배열입니다. 새로고침하면 초기화됩니다.
 (() => {
 "use strict";
 const DAYS = ["월", "화", "수", "목", "금"];
@@ -76,11 +78,6 @@ function cartSlots() {
 }
 
 const isInCart = (id) => state.cart.some((course) => course.offering_id === id);
-function hasConflict(course) {
-  if (isInCart(course.offering_id)) return false;
-  const taken = cartSlots();
-  return numericSlots(course).some((s) => taken.some((t) => overlaps(s, t)));
-}
 
 function el(tag, className, text) {
   const node = document.createElement(tag);
@@ -116,7 +113,7 @@ function renderResults() {
   }
 
   for (const course of visible) {
-    const conflict = hasConflict(course);
+    const conflict = course.conflict;
     const inCart = isInCart(course.offering_id);
     const row = el("div", "course-row");
     row.setAttribute("role", "row");
@@ -154,7 +151,7 @@ function renderResults() {
 
 function renderToast(visible) {
   const toast = document.getElementById("conflict-toast");
-  const blocked = visible.find(hasConflict);
+  const blocked = visible.find((course) => course.conflict);
   const message = state.cartMessage || (blocked ? `"${blocked.course_name}"는 담긴 과목과 시간이 겹쳐 담을 수 없습니다.` : "");
   toast.hidden = !message;
   document.getElementById("conflict-message").textContent = message;
@@ -222,24 +219,32 @@ function render() {
   renderCart();
 }
 
-function handleAddToCart(id) {
-  const course = findCourse(id);
-  if (!course || isInCart(id)) return;
-  if (state.cart.some((item) => item.course_code === course.course_code)) {
-    state.cartMessage = "같은 과목의 다른 분반이 이미 담겨 있습니다.";
+async function handleAddToCart(id) {
+  try {
+    await window.api.addToCart(id);
+    state.cartMessage = "";
+    await Promise.all([
+      loadCart(),
+      loadCourses(),
+    ]);
+  } catch (error) {
+    state.cartMessage = error.message;
     renderToast(state.courses);
-    return;
   }
-  if (hasConflict(course)) return;
-  state.cartMessage = "";
-  state.cart.push({ ...course, slots: course.slots.map((s) => ({ ...s })) });
-  render();
 }
 
-function handleRemoveFromCart(id) {
-  state.cartMessage = "";
-  state.cart = state.cart.filter((course) => course.offering_id !== id);
-  render();
+async function handleRemoveFromCart(id) {
+  try {
+    await window.api.removeFromCart(id);
+
+    await Promise.all([
+      loadCart(),
+      loadCourses(),
+    ]);
+  } catch (error) {
+    state.cartMessage = error.message;
+    renderToast(state.courses);
+  }
 }
 
 function bindFilters() {
@@ -283,33 +288,39 @@ function bindFilters() {
   });
 }
 
-async function loadMeta() {
-  const semester = document.getElementById("meta-semester");
-  const badge = document.getElementById("meta-updated");
-  const retry = document.getElementById("meta-retry");
-  retry.hidden = true;
+async function loadCart() {
   try {
-    const meta = await window.api.getMeta();
-    semester.removeAttribute("title");
-    semester.textContent = `${meta.semester}학기 기준`;
-    badge.hidden = !meta.last_updated;
-    badge.textContent = meta.last_updated ? `최신 반영일 ${meta.last_updated.slice(5).replace("-", ".")}` : "";
+  const cart = await window.api.getCart();
+  renderMiniGrid();
+  renderCart();
   } catch (error) {
-    semester.textContent = "학기 정보를 불러오지 못했습니다.";
-    semester.title = error.message;
-    badge.hidden = true;
-    retry.hidden = false;
+    state.cartMessage = error.message;
+    renderToast(state.courses);
   }
+}
+
+async function refresh() {
+  const [cartResult] = await Promise.allSettled([
+    loadCart(),
+    loadCourses(),
+  ]);
+
+  if (cartResult.status === "rejected") {
+    state.cartMessage = cartResult.reason.message;
+  }
+
+  render();
 }
 
 function init() {
   bindFilters();
-  document.getElementById("meta-retry").addEventListener("click", loadMeta);
   renderMiniGrid();
   renderCart();
-  loadMeta();
-  loadCourses();
 }
 
-init();
+window.dashboard = Object.freeze({
+  init,
+  refresh,
+});
+
 })();
