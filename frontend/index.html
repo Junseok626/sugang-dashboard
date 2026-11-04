@@ -30,7 +30,7 @@
     </header>
     <section id="tab-timetable" aria-label="내 시간표" hidden>
     </section>
-    <section id="tab-search" aria-label="과목 찾기"></section>
+    <section id="tab-search" aria-label="과목 찾기">
       <div class="body">
         <aside class="filters" aria-label="필터">
           <fieldset class="filter-group filter-group--tight">
@@ -79,32 +79,33 @@
           </div>
         </aside>
 
-      <main class="results">
-        <p class="results__count" id="result-count" role="status"></p>
-        <div class="course-table" role="table" aria-label="검색 결과">
-          <div class="course-table__head" role="row">
-            <span role="columnheader">과목명</span>
-            <span role="columnheader">교수</span>
-            <span role="columnheader">시간</span>
-            <span role="columnheader">학점</span>
-            <span role="columnheader">평점</span>
-            <span role="columnheader" aria-label="담기"></span>
+        <main class="results">
+          <p class="results__count" id="result-count" role="status"></p>
+          <div class="course-table" role="table" aria-label="검색 결과">
+            <div class="course-table__head" role="row">
+              <span role="columnheader">과목명</span>
+              <span role="columnheader">교수</span>
+              <span role="columnheader">시간</span>
+              <span role="columnheader">학점</span>
+              <span role="columnheader">평점</span>
+              <span role="columnheader" aria-label="담기"></span>
+            </div>
+            <div id="course-rows"></div>
           </div>
-          <div id="course-rows"></div>
-        </div>
-      </main>
+        </main>
 
-      <aside class="my-timetable" aria-label="내 시간표">
-        <h2 class="my-timetable__title" id="cart-title"></h2>
-        <div class="mini-grid" id="mini-grid"></div>
-        <ul class="cart-list" id="cart-list"></ul>
-        <div class="toast" id="conflict-toast" role="status" hidden>
-          <span class="toast__icon"><img src="css/icon-warning.svg" width="10.3923" height="8.25" alt=""></span>
-          <p class="toast__message" id="conflict-message"></p>
-        </div>
-      </aside>
-    </div>
-  </section>
+        <aside class="my-timetable" aria-label="내 시간표">
+          <h2 class="my-timetable__title" id="cart-title"></h2>
+          <div class="mini-grid" id="mini-grid"></div>
+          <ul class="cart-list" id="cart-list"></ul>
+          <div class="toast" id="conflict-toast" role="status" hidden>
+            <span class="toast__icon"><img src="css/icon-warning.svg" width="10.3923" height="8.25" alt=""></span>
+            <p class="toast__message" id="conflict-message"></p>
+          </div>
+        </aside>
+      </div>
+    </section>
+  </div>
 
   <script src="js/api.js"></script>
   <script src="js/timetable.js"></script>
