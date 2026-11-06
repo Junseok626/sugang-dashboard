@@ -203,15 +203,23 @@ button, input, select { font: inherit; color: inherit; }
   flex: 1;
   min-width: 0;
   padding: 20px 24px;
+  min-height: 0;
   overflow-y: auto;
 }
-.results__count { margin: 0; font-size: 13px; color: var(--color-text-muted); }
+
+.results__count {
+  margin: 0;
+  font-size: 13px;
+  color: var(--color-text-muted);
+  flex-shrink: 0;
+}
 
 .course-table {
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: 8px;
   overflow: hidden;
+  flex-shrink: 0;
 }
 .course-table__head,
 .course-row {
