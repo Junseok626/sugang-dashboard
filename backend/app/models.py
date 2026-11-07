@@ -248,7 +248,7 @@ def remove_from_cart(db, session_id, offering_id):
     db.commit()
     return cursor.rowcount > 0
 
-"""
+
 # ── 5주차: 강의평 ───────────────────────────────────────
 def add_review(db, offering_id, rating, comment, taken_semester):
     # 강의평 저장 (과목 + 교수 단위). 새 review_id를 돌려준다. 입력값 검사는 routes.py에서.
@@ -266,4 +266,3 @@ def add_review(db, offering_id, rating, comment, taken_semester):
     )
     db.commit()
     return cursor.lastrowid
-"""

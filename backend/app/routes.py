@@ -7,25 +7,6 @@ app/routes.py — API 주소(엔드포인트) 목록  [3주차: 조회 / 4주차
     요청·응답의 정확한 모양(필드 이름, 상태 코드, 예시 JSON)은 로드맵.md "부록 A. API 명세"를 따른다.
     화면 쪽(frontend/js/api.js)도 같은 명세를 보고 만든다.
 
-만들 것
-
-    bp = Blueprint("api", __name__, url_prefix="/api")      ← app/__init__.py에서 등록
-
-    current_session_id() -> str
-        session["sid"]를 돌려준다. (app/__init__.py의 before_request가 미리 만들어 둔 값)
-
-    DB 연결은 db.get_db(), 이번 학기는 current_app.config["CURRENT_SEMESTER"]로 얻는다.
-
-    [5주차]
-    POST   /api/courses/<int:offering_id>/reviews
-               body {"rating": 5, "comment": "...", "taken_semester": "2026-1"}
-               먼저 검사하고, 틀리면 400 {"error": "이유"}:
-                   rating          1~5 정수 (True/False, 3.5, "5"는 거절)
-                   comment         앞뒤 공백을 지운 뒤 5~500자
-                   taken_semester  "YYYY-1" 또는 "YYYY-2" (정규식 ^[0-9]{4}-[12]$)
-               통과하면 models.add_review → 201 {"review_id": 새 번호}
-               LookupError → 404
-
 규칙
     - 오류 응답은 항상 {"error": "한국어 문장"} 모양. 화면이 이 문장을 그대로 사용자에게 보여준다.
     - body는 request.get_json(silent=True) or {} 로 읽는다 (JSON이 아니어도 서버가 죽지 않게).
@@ -127,3 +108,29 @@ def remove_from_cart(offering_id):
     if not models.remove_from_cart(get_db(), current_session_id(), offering_id):
         return error("담겨 있지 않은 과목입니다.", 404)
     return {"ok": True}
+
+# ── 5주차: 강의평 ───────────────────────────────────────
+@bp.post("/courses/<int:offering_id>/reviews")
+def add_review(offering_id):
+    """A-4. 강의평 쓰기  body: {"rating": 4, "comment": "...", "taken_semester": "2026-1"}"""
+    body = request.get_json(silent=True) or {}
+
+    rating = body.get("rating")
+    # bool은 int의 일종이라 True가 1점으로 통과하지 않도록 따로 막는다
+    if not isinstance(rating, int) or isinstance(rating, bool) or not 1 <= rating <= 5:
+        return error("별점은 1~5 사이로 골라 주세요.", 400)
+
+    comment = body.get("comment")
+    comment = comment.strip() if isinstance(comment, str) else ""
+    if not 5 <= len(comment) <= 500:
+        return error("강의평은 5자 이상 500자 이하로 적어 주세요.", 400) #필요한지 모르겠음
+
+    taken_semester = body.get("taken_semester")
+    if not isinstance(taken_semester, str) or not SEMESTER_PATTERN.fullmatch(taken_semester):
+        return error("수강 학기 형식이 올바르지 않습니다. (예: 2026-1)", 400)
+
+    try:
+        review_id = models.add_review(get_db(), offering_id, rating, comment, taken_semester)
+    except LookupError:
+        return error(NOT_FOUND, 404)
+    return {"review_id": review_id}, 201
