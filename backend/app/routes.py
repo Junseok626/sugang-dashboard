@@ -123,7 +123,7 @@ def add_review(offering_id):
     comment = body.get("comment")
     comment = comment.strip() if isinstance(comment, str) else ""
     if not 5 <= len(comment) <= 500:
-        return error("강의평은 5자 이상 500자 이하로 적어 주세요.", 400) #필요한지 모르겠음
+        return error("강의평은 5자 이상 500자 이하로 적어 주세요.", 400) #빈 강의평을 저장해선 안됨
 
     taken_semester = body.get("taken_semester")
     if not isinstance(taken_semester, str) or not SEMESTER_PATTERN.fullmatch(taken_semester):

@@ -7,22 +7,7 @@ tests/test_api.py — API 검사  [3주차: 조회 / 4주차: 담기 / 5주차: 
     data = res.get_json()
 응답 모양은 로드맵.md "부록 A. API 명세"와 같아야 한다.
 
-채울 테스트
-    [5주차]
-    test_review_create         작성 → 201, 상세의 reviews 맨 앞에 보이고 review_count·avg_rating이 바뀌는지
-    test_review_shared_by_professor
-                               같은 과목·같은 교수의 다른 분반 상세에도 같은 강의평이 보이는지
-    test_review_validation     아래는 모두 400
-                                   rating 0, 6, 3.5, "5", 빠짐
-                                   comment "좋아요"(5자 미만), 501자, 공백만
-                                   taken_semester "2026-3", "26-1", 빠짐
-    test_review_404            없는 offering_id → 404
-"""
-"""
 tests/test_api.py — API 검사  [3주차: 조회 / 4주차: 담기 / 5주차: 강의평]
-
-사용하는 픽스처: client (conftest.py — 샘플 CSV를 넣은 임시 DB로 만든 앱)
-응답 모양은 로드맵.md "부록 A. API 명세"와 같아야 한다.
 
 샘플 데이터의 offering_id (offerings.csv에 적힌 순서대로 1번부터)
     1 기계학습 CSE401-01 (김OO, 화·목 11-12, 평균 4.5)
@@ -321,3 +306,138 @@ def test_detail_flags(client):
     add(client, 1)
     assert client.get("/api/courses/1").get_json()["in_cart"] is True
     assert client.get("/api/courses/4").get_json()["conflict"] is True
+
+# ── 5주차: 강의평 ───────────────────────────────────────
+RATING_ERROR = "별점은 1~5 사이로 골라 주세요."
+COMMENT_ERROR = "강의평은 5자 이상 500자 이하로 적어 주세요."
+SEMESTER_ERROR = "수강 학기 형식이 올바르지 않습니다. (예: 2026-1)"
+
+
+def review_body(**changes):
+    """올바른 강의평 body. 검사하려는 필드만 바꿔서 쓴다."""
+    return {"rating": 3, "comment": "팀 프로젝트가 많아요.", "taken_semester": "2026-1", **changes}
+
+
+def post_review(client, offering_id, **changes):
+    return client.post(f"/api/courses/{offering_id}/reviews", json=review_body(**changes))
+
+
+def detail(client, offering_id):
+    res = client.get(f"/api/courses/{offering_id}")
+    assert res.status_code == 200
+    return res.get_json()
+
+
+def test_review_create(client):
+    res = post_review(client, 1)  # 기계학습: 기존 5점, 4점
+    assert res.status_code == 201
+    review_id = res.get_json()["review_id"]
+    assert res.get_json() == {"review_id": review_id}
+
+    data = detail(client, 1)
+    newest = data["reviews"][0]  # 새 강의평이 맨 앞
+    assert newest["review_id"] == review_id
+    assert newest["rating"] == 3
+    assert newest["comment"] == "팀 프로젝트가 많아요."
+    assert newest["taken_semester"] == "2026-1"
+    assert data["review_count"] == 3
+    assert data["avg_rating"] == 4.0  # (5 + 4 + 3) / 3
+
+    # 검색 목록의 평점·개수도 같이 바뀐다
+    course = next(c for c in get_courses(client) if c["offering_id"] == 1)
+    assert course["review_count"] == 3
+    assert course["avg_rating"] == 4.0
+
+
+def test_review_first_on_course_without_reviews(client):
+    assert detail(client, 7)["avg_rating"] is None  # 글쓰기와소통: 강의평 없음
+
+    assert post_review(client, 7, rating=5).status_code == 201
+
+    data = detail(client, 7)
+    assert data["review_count"] == 1
+    assert data["avg_rating"] == 5.0
+
+
+def test_review_shared_by_professor(client):
+    # 데이터베이스 01반(2번)에 쓰면 같은 교수의 02반(3번)에도 보인다
+    review_id = post_review(client, 2).get_json()["review_id"]
+
+    first = detail(client, 2)
+    second = detail(client, 3)
+    assert second["reviews"][0]["review_id"] == review_id
+    assert first["reviews"] == second["reviews"]
+    assert first["review_count"] == second["review_count"] == 3
+
+
+def test_review_not_shared_with_other_course(client):
+    post_review(client, 1)
+    assert detail(client, 4)["review_count"] == 1  # 데이터시각화는 그대로
+
+
+def test_review_boundary_values_ok(client):
+    for changes in [
+        {"rating": 1},
+        {"rating": 5},
+        {"comment": "다섯글자임"},   # 5자
+        {"comment": "가" * 500},     # 500자
+        {"taken_semester": "2026-2"},
+    ]:
+        assert post_review(client, 1, **changes).status_code == 201
+
+
+def test_review_comment_is_stripped(client):
+    assert post_review(client, 1, comment="  앞뒤 공백 지우기  ").status_code == 201
+    assert detail(client, 1)["reviews"][0]["comment"] == "앞뒤 공백 지우기"
+
+
+def test_review_validation(client):
+    bad_requests = [
+        ({"rating": 0}, RATING_ERROR),
+        ({"rating": 6}, RATING_ERROR),
+        ({"rating": 3.5}, RATING_ERROR),
+        ({"rating": "5"}, RATING_ERROR),
+        ({"rating": True}, RATING_ERROR),   # True는 1로 통과하면 안 됨
+        ({"rating": None}, RATING_ERROR),
+        ({"comment": "네글자임"}, COMMENT_ERROR),       # 4자
+        ({"comment": "  좋아요  "}, COMMENT_ERROR),     # 공백을 지우면 5자 미만
+        ({"comment": "가" * 501}, COMMENT_ERROR),
+        ({"comment": "     "}, COMMENT_ERROR),          # 공백만
+        ({"comment": 12345}, COMMENT_ERROR),
+        ({"comment": None}, COMMENT_ERROR),
+        ({"taken_semester": "2026-3"}, SEMESTER_ERROR),
+        ({"taken_semester": "26-1"}, SEMESTER_ERROR),
+        ({"taken_semester": "2026-1\n"}, SEMESTER_ERROR),  # 줄바꿈이 붙어도 거절
+        ({"taken_semester": 20261}, SEMESTER_ERROR),
+        ({"taken_semester": None}, SEMESTER_ERROR),
+    ]
+    for changes, message in bad_requests:
+        res = post_review(client, 1, **changes)
+        assert res.status_code == 400, changes
+        assert res.get_json() == {"error": message}
+    assert detail(client, 1)["review_count"] == 2  # 하나도 저장되지 않음
+
+
+def test_review_missing_fields(client):
+    for field, message in [
+        ("rating", RATING_ERROR),
+        ("comment", COMMENT_ERROR),
+        ("taken_semester", SEMESTER_ERROR),
+    ]:
+        body = review_body()
+        del body[field]
+        res = client.post("/api/courses/1/reviews", json=body)
+        assert res.status_code == 400, field
+        assert res.get_json() == {"error": message}
+
+
+def test_review_not_json(client):
+    res = client.post("/api/courses/1/reviews", data="별점 5점")
+    assert res.status_code == 400
+    assert res.get_json() == {"error": RATING_ERROR}
+
+
+def test_review_404(client):
+    res = post_review(client, 999)
+    assert res.status_code == 404
+    assert res.get_json() == {"error": "존재하지 않는 과목입니다."}
