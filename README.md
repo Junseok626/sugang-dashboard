@@ -16,8 +16,8 @@ pip install -r backend/requirements.txt
 
 이후 백엔드 폴더로 이동 후 python run.py
 http://localhost:5000 접속.
-
-http://172.17.105.186:5000
+ipconfig ip 4v 주소 입력.
+http://172.17.105.23:5000
 가상환경 끌 때 deactivate
 ```
 

@@ -25,6 +25,11 @@ run.py — 서버를 켜는 파일  [3주차에 채움]
     macOS에서 5000번 포트가 이미 쓰이고 있다는 오류가 나면 port=5001로 바꾼다.
 """
 from app import create_app
+
 app = create_app()
+
 if __name__ == "__main__":
-    app.run(debug=True, port=5000)
+    # host="0.0.0.0": 같은 네트워크의 다른 PC에서도 http://<이 노트북 IP>:5000 으로 접속할 수 있게 연다.
+    # 이렇게 열 때는 debug를 끈다. 켜 두면 오류 화면의 디버거가 네트워크에 그대로 노출된다.
+    app.run(host="0.0.0.0", port=5000, debug=False)
+    
