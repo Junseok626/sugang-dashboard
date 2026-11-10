@@ -130,7 +130,11 @@ function renderResults() {
     btn.setAttribute("aria-label", `${course.course_name} ${inCart ? "빼기" : "담기"}`);
     btn.addEventListener("click", () => (inCart ? handleRemoveFromCart : handleAddToCart)(course.offering_id));
 
-    const name = el("span", "course-row__name", course.course_name);
+    const name = el("span", "course-row__name");
+    const link = el("button", "detail-trigger course-detail-link", course.course_name);
+    link.type = "button";
+    link.dataset.detailId = course.offering_id;
+    name.append(link);
     name.title = course.course_name;
 
     row.append(
@@ -198,7 +202,9 @@ function renderCart() {
   if (!state.cart.length) list.append(el("li", "cart-list__empty", "아직 담은 과목이 없어요."));
   for (const course of state.cart) {
     const card = el("li", "cart-card");
-    const text = el("div", "cart-card__text");
+    const text = el("button", "cart-card__text detail-trigger");
+      text.type = "button";
+      text.dataset.detailId = course.offering_id;
     text.append(
       el("span", "cart-card__name", course.course_name),
       el("span", "cart-card__meta", `${formatSlots(course.slots)} · ${course.professor}`),
