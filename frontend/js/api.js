@@ -43,6 +43,11 @@
     getMeta: () => request("/meta"),
     searchCourses,
     getCourse: (id) => request(`/courses/${encodeURIComponent(id)}`),
+    postReview: (id, body) => request(`/courses/${encodeURIComponent(id)}/reviews`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    }),
     getCart: () => request("/cart"),
     addToCart: (id) => request("/cart", {
       method: "POST",
