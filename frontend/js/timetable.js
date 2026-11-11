@@ -83,7 +83,9 @@
         const start = Math.max(START, minutes(slot.start));
         const end = Math.min(END, minutes(slot.end));
         if (day < 0 || !Number.isFinite(start) || !Number.isFinite(end) || end <= start) continue;
-        const block = el("div", "timetable-block");
+        const block = el("button", "timetable-block");
+        block.type = "button";
+        block.dataset.detailId = course.offering_id;
         block.style.left = `calc(var(--time-label-width) + (100% - var(--time-label-width)) * ${day} / 5)`;
         block.style.top = `calc(var(--day-header-height) + var(--half-hour-height) * ${(start - START) / STEP})`;
         block.style.height = `calc(var(--half-hour-height) * ${(end - start) / STEP})`;
@@ -94,7 +96,9 @@
         blocks.append(block);
       }
       const card = el("li", "cart-card");
-      const text = el("div", "cart-card__text");
+      const text = el("button", "cart-card__text detail-trigger");
+      text.type = "button";
+      text.dataset.detailId = course.offering_id;
       const name = el("span", "cart-card__name", course.course_name);
       name.title = course.course_name;
       text.append(name, el("span", "cart-card__meta", `${formatSlots(course.slots)} · ${course.professor}`));
@@ -109,6 +113,7 @@
   }
 
   async function refresh() {
+    if (!isAvailable()) return;
     const requestId = ++latestRequest;
     state.loading = true;
     state.error = "";
@@ -146,11 +151,19 @@
   }
 
   function init() {
-    if (initialized) return;
+    if (initialized || !isAvailable()) return;
     initialized = true;
     buildGrid();
     document.getElementById("timetable-retry").addEventListener("click", refresh);
   }
 
-  window.timetable = Object.freeze({ init, refresh });
+  // 현재 HTML에 큰 시간표가 없는 경우 초기화·갱신을 건너뜁니다.
+  function isAvailable() {
+    return ["tab-timetable", "week-grid-cells", "week-grid-blocks", "timetable-summary",
+      "timetable-cart-title", "timetable-total", "timetable-empty", "timetable-status",
+      "timetable-error", "timetable-retry", "timetable-cart-list"]
+      .every((id) => document.getElementById(id));
+  }
+
+  window.timetable = Object.freeze({ init, refresh, isAvailable });
 })();
