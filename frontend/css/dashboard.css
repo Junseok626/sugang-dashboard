@@ -1,5 +1,7 @@
 /* Figma 변수(Dashboard Colors) → CSS 변수 */
 :root {
+  --filter-width: 220px;
+  --cart-width: 300px;
   --block-1: #3a6ea5;
   --block-2: #dd6630;
   --block-3: #7b4fc4;
@@ -88,7 +90,7 @@ button, input, select { font: inherit; color: inherit; }
 }
 .header-tabs__link:focus-visible { outline: 2px solid var(--color-primary); outline-offset: -4px; }
 
-.search { display: flex; gap: 8px; width: 100%; flex-shrink: 0; }
+.search { display: flex; gap: 8px; width: 100%; min-width: 0; flex-shrink: 0; }
 .search__input {
   flex: 1;
   min-width: 0;
@@ -131,7 +133,7 @@ button, input, select { font: inherit; color: inherit; }
   flex-direction: column;
   gap: 22px;
   flex-shrink: 0;
-  width: 220px;
+  width: var(--filter-width);
   padding: 20px;
   background: var(--color-surface);
   border-right: 1px solid var(--color-border);
@@ -206,7 +208,6 @@ button, input, select { font: inherit; color: inherit; }
   min-height: 0;
   overflow-y: auto;
 }
-
 .results__count {
   margin: 0;
   font-size: 13px;
@@ -277,7 +278,7 @@ button, input, select { font: inherit; color: inherit; }
   flex-direction: column;
   gap: 12px;
   flex-shrink: 0;
-  width: 300px;
+  width: var(--cart-width);
   padding: 20px;
   background: var(--color-surface);
   border-left: 1px solid var(--color-border);
@@ -426,3 +427,72 @@ button, input, select { font: inherit; color: inherit; }
 .timetable-status { padding: 12px; border: 1px solid var(--color-warn-border); border-radius: 6px; background: var(--color-warn-bg); color: var(--color-warn-text); font-size: 12px; }
 .timetable-status p { margin: 0 0 8px; }
 .timetable-panel .cart-card__remove:disabled { cursor: wait; opacity: .5; }
+
+/* 5주차: 상세 모달과 강의평 작성 */
+.detail-trigger { border: 0; padding: 0; background: transparent; text-align: left; cursor: pointer; }
+.course-detail-link { max-width: 100%; white-space: inherit; overflow-wrap: anywhere; }
+.course-detail-link:hover, .detail-trigger:hover .cart-card__name { color: var(--color-primary); text-decoration: underline; }
+button.timetable-block { font: inherit; text-align: left; cursor: pointer; }
+[data-detail-id]:focus-visible, .detail-modal button:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 2px; }
+.detail-modal { width: 480px; max-width: calc(100vw - 32px); max-height: calc(100dvh - 32px); padding: 10px; border: 0; border-radius: 16px; color: var(--color-text); background: var(--color-surface); box-shadow: 0 12px 32px #0000002e; }
+.detail-modal[open] { display: flex; flex-direction: column; }
+.detail-modal:not([open]), .detail-modal [hidden] { display: none !important; }
+.detail-modal::backdrop { background: #00000066; }
+.detail-header { position: relative; padding: 20px 24px 18px; border-bottom: 1px solid var(--color-border); flex-shrink: 0; }
+.detail-header h2 { margin: 0 36px 6px 0; font-size: 20px; overflow-wrap: anywhere; }
+#detail-code { margin: 0; font-size: 12px; color: var(--color-text-muted); overflow-wrap: anywhere; }
+.detail-close { position: absolute; top: 20px; right: 24px; width: 28px; height: 28px; border: 0; border-radius: 6px; background: var(--color-disabled-bg); color: var(--color-text-muted); cursor: pointer; }
+.detail-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; font-size: 11px; }
+.detail-tags span { padding: 3px 8px; border-radius: 10px; background: var(--color-disabled-bg); }
+#detail-category { background: var(--color-primary-subtle); color: var(--color-primary); }
+#detail-rating { background: var(--color-warn-bg); color: var(--color-star); }
+.detail-body { min-height: 0; overflow-y: auto; padding: 20px 24px; overscroll-behavior: contain; }
+.detail-section + .detail-section { margin-top: 24px; }
+.detail-section h3 { margin: 0 0 12px; font-size: 12px; color: var(--color-text-muted); }
+.detail-info { margin: 0; font-size: 13px; }
+.detail-info > div { display: flex; gap: 8px; margin-top: 10px; }
+.detail-info dt { width: 64px; flex-shrink: 0; color: var(--color-text-muted); }
+.detail-info dd { margin: 0; overflow-wrap: anywhere; }
+.detail-review-heading { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.detail-link { padding: 0; border: 0; background: none; color: var(--color-primary); font-size: 11px; cursor: pointer; }
+.review-card, .review-form { padding: 12px 14px; border: 1px solid var(--color-border); border-radius: 8px; }
+.review-card + .review-card { margin-top: 8px; }
+.review-card__meta { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.review-card__stars { color: var(--color-star); font-size: 12px; }
+.review-card__term { color: var(--color-text-muted); font-size: 11px; }
+.review-card__comment { margin: 8px 0 0; font-size: 13px; line-height: 1.6; white-space: pre-wrap; overflow-wrap: anywhere; }
+.detail-empty { font-size: 13px; color: var(--color-text-muted); line-height: 1.6; }
+.detail-footer { display: flex; gap: 10px; padding: 16px 24px; border-top: 1px solid var(--color-border); flex-shrink: 0; }
+.detail-button { min-height: 40px; padding: 8px 14px; border: 1px solid var(--color-border-strong); border-radius: 8px; background: var(--color-surface); font-size: 13px; cursor: pointer; }
+.detail-button--primary { background: var(--color-primary); border-color: var(--color-primary); color: var(--color-text-on-primary); font-size: 14px; font-weight: 700; }
+#detail-cart { flex: 1; }
+.detail-button--remove { color: var(--color-remove); background: var(--color-remove-subtle); border-color: var(--color-remove); }
+.detail-modal button:disabled { opacity: .55; cursor: not-allowed; }
+.detail-error { color: var(--color-danger); font-size: 12px; line-height: 1.6; overflow-wrap: anywhere; }
+.detail-notice { color: var(--color-primary); font-size: 12px; }
+.detail-error:empty, .detail-notice:empty { display: none; }
+.review-form { margin-bottom: 12px; background: var(--color-surface-subtle); }
+.review-form fieldset { min-width: 0; margin: 0; padding: 0; border: 0; }
+.review-form legend { margin-bottom: 8px; font-size: 13px; font-weight: 700; }
+.review-stars { display: flex; width: fit-content; gap: 4px; touch-action: none; user-select: none; cursor: ew-resize; }
+/* 별의 왼쪽/오른쪽 절반을 각각 0.5점/1점 버튼으로 사용합니다. */
+.review-star { position: relative; display: inline-block; width: 32px; height: 36px; font-size: 30px; line-height: 36px; text-align: center; }
+.review-star__icon { display: inline-block; background: linear-gradient(to right, var(--color-star) var(--star-fill, 0%), var(--color-border-strong) var(--star-fill, 0%)); background-clip: text; -webkit-background-clip: text; color: transparent; }
+.review-star__half { position: absolute; top: 0; left: 0; width: 50%; height: 100%; padding: 0; border: 0; background: transparent; cursor: ew-resize; }
+.review-star__half--right { left: 50%; }
+.review-star__half:hover { background: #b8860b15; }
+.review-card__stars { display: inline-flex; gap: 1px; }
+#review-rating-value, #review-length { margin: 4px 0 10px; font-size: 11px; color: var(--color-text-muted); }
+#review-length { text-align: right; }
+.review-form label { display: block; margin: 12px 0 6px; font-size: 12px; }
+.review-form select, .review-form textarea { width: 100%; padding: 8px; border: 1px solid var(--color-border-strong); border-radius: 6px; font: inherit; font-size: 13px; background: var(--color-surface); }
+.review-form textarea { resize: vertical; min-height: 96px; }
+.review-actions { display: flex; justify-content: flex-end; gap: 8px; }
+
+/* 이수체계도 메뉴의 안내 화면 */
+#tab-curriculum { flex: 1; min-height: 0; padding: 28px; overflow: auto; }
+#tab-curriculum[hidden] { display: none; }
+.curriculum-card { padding: 24px; border: 1px solid var(--color-border); border-radius: 16px; background: var(--color-surface); }
+.curriculum-card h2 { margin: 0 0 12px; font-size: 18px; }
+.curriculum-card p { margin: 0 0 24px; font-size: 13px; color: var(--color-text-muted); }
+button.timetable-block { border-top: 0; border-left: 0; }
