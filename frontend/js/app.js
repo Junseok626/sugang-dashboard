@@ -32,9 +32,10 @@
   function showTab() {
     let tab = window.location.hash;
 
-    // 주소에 탭이 없거나 잘못된 값이면 내 시간표로
-    if (tab !== "#timetable" && tab !== "#search") {
-      tab = "#timetable";
+    // 첫 접속은 전체 과목 조회. 시간표 화면이 없는 구성도 검색으로 연결합니다.
+    if ((!["#timetable", "#search", "#curriculum"].includes(tab)) ||
+        (tab === "#timetable" && !window.timetable?.isAvailable())) {
+      tab = "#search";
       window.history.replaceState(null, "", tab);
     }
 
@@ -43,6 +44,8 @@
 
     document.getElementById("tab-search").hidden =
       tab !== "#search";
+
+    document.getElementById("tab-curriculum").hidden = tab !== "#curriculum";
 
     // 선택된 탭의 파란 글자·밑줄 표시
     document.querySelectorAll(".header-tabs__link").forEach((link) => {
@@ -56,9 +59,7 @@
     // 선택한 탭의 데이터를 다시 조회하고 화면 갱신
     if (tab === "#search") {
       window.dashboard.refresh();
-    } else {
-      // 다음 단계에서 timetable.js가 공개할 함수.
-      // 아직 파일이 없을 때는 실행하지 않음.
+    } else if (tab === "#timetable") {
       window.timetable?.refresh();
     }
   }
