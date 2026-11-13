@@ -7,43 +7,437 @@ tests/test_api.py — API 검사  [3주차: 조회 / 4주차: 담기 / 5주차: 
     data = res.get_json()
 응답 모양은 로드맵.md "부록 A. API 명세"와 같아야 한다.
 
-채울 테스트
+tests/test_api.py — API 검사  [3주차: 조회 / 4주차: 담기 / 5주차: 강의평]
 
-    [3주차]
-    test_meta                  /api/meta → semester "2026-2", last_updated "2026-09-20"
-    test_index_page            / → 200, frontend/index.html 내용이 나오는지 (Flask가 화면도 내보내는지)
-    test_search_all            /api/courses → count == len(courses), 한 줄에 부록 A의 키가 모두 있는지
-    test_search_q              ?q=데이터 → 과목명이나 교수명에 "데이터"가 들어간 것만
-    test_search_category       ?category=전공필수&category=교양 → 두 구분만
-    test_search_day            ?day=월 → 월요일 수업이 하나라도 있는 과목만 (시간 미정 과목은 빠짐)
-    test_search_credit         ?credit=3
-    test_search_min_rating     ?min_rating=4 → 평균 4.0 이상만, 강의평 없는 과목은 빠짐
-    test_search_bad_param      ?credit=abc → 400 + error
-    test_search_no_result      ?q=없는과목 → 200, count 0 (오류가 아님)
-    test_detail                /api/courses/<id> → department, semester, reviews(최신순), avg_rating, review_count
-    test_detail_404            없는 번호 → 404 + error
-    test_unknown_api_404       /api/없는주소 → 404 + JSON error
-
-    [4주차]
-    test_cart_empty            처음 /api/cart → items [], total_credit 0
-    test_cart_add_and_list     담기 → 201, /api/cart에 보이고 total_credit이 학점 합과 같은지
-    test_cart_duplicate        같은 과목 두 번 → 409, reason "already_in_cart"
-    test_cart_same_course      같은 과목 다른 분반 → 409, reason "same_course"
-    test_cart_time_conflict    시간 겹치는 과목 → 409, reason "time_conflict", conflicts에 담긴 과목 이름
-    test_cart_no_time_ok       시간 미정 과목은 겹침 없이 담기는지
-    test_cart_not_found        없는 offering_id → 404
-    test_cart_bad_body         body 없음 / offering_id가 "abc" → 400
-    test_cart_remove           빼기 → 200, 한 번 더 빼면 404
-    test_cart_is_per_session   app.test_client()를 두 개 만들어, 한쪽에서 담은 과목이 다른 쪽 /api/cart에 안 보이는지
-    test_search_flags          담은 뒤 /api/courses에서 담은 과목 in_cart True, 겹치는 과목 conflict True
-
-    [5주차]
-    test_review_create         작성 → 201, 상세의 reviews 맨 앞에 보이고 review_count·avg_rating이 바뀌는지
-    test_review_shared_by_professor
-                               같은 과목·같은 교수의 다른 분반 상세에도 같은 강의평이 보이는지
-    test_review_validation     아래는 모두 400
-                                   rating 0, 6, 3.5, "5", 빠짐
-                                   comment "좋아요"(5자 미만), 501자, 공백만
-                                   taken_semester "2026-3", "26-1", 빠짐
-    test_review_404            없는 offering_id → 404
+샘플 데이터의 offering_id (offerings.csv에 적힌 순서대로 1번부터)
+    1 기계학습 CSE401-01 (김OO, 화·목 11-12, 평균 4.5)
+    2 데이터베이스 CSE402-01 (이OO, 월·수 10-11, 평균 3.5)
+    3 데이터베이스 CSE402-02 (이OO, 화·목 15-16, 평균 3.5)
+    4 데이터시각화 CSE403-01 (박OO, 화·목 11-12, 평균 4.0)
+    5 실용머신러닝 CSE404-01 (김OO, 월·수 12-13, 평균 5.0)
+    6 캡스톤디자인 CSE405-01 (미정, 시간 미정, 강의평 없음)
+    7 글쓰기와소통 GEN101-01 (최OO, 금 09-11, 2학점, 강의평 없음)
 """
+from app.db import connect
+
+COURSE_KEYS = {
+    "offering_id", "course_code", "course_name", "professor", "credit", "category",
+    "classroom", "day_time", "slots", "avg_rating", "review_count", "in_cart", "conflict",
+}
+
+
+def get_courses(client, query=""):
+    """/api/courses 응답에서 과목 목록만 꺼낸다."""
+    res = client.get("/api/courses" + query)
+    assert res.status_code == 200
+    data = res.get_json()
+    assert data["count"] == len(data["courses"])
+    return data["courses"]
+
+
+def names(courses):
+    return sorted(c["course_name"] for c in courses)
+
+
+# ── 3주차: 조회 ─────────────────────────────────────────
+def test_meta(client):
+    res = client.get("/api/meta")
+    assert res.status_code == 200
+    assert res.get_json() == {"semester": "2026-2", "last_updated": "2026-09-20"}
+
+
+def test_index_page(client):
+    res = client.get("/")
+    assert res.status_code == 200
+    assert "<html" in res.get_data(as_text=True)
+
+
+def test_search_all(client):
+    courses = get_courses(client)
+    assert len(courses) == 7
+    for course in courses:
+        assert set(course) == COURSE_KEYS
+    # 3주차에는 아무것도 담지 않았으므로 둘 다 False
+    assert not any(c["in_cart"] or c["conflict"] for c in courses)
+
+
+def test_search_sorted_by_name(client):
+    course_names = [c["course_name"] for c in get_courses(client)]
+    assert course_names == sorted(course_names)
+
+
+def test_search_course_shape(client):
+    course = next(c for c in get_courses(client) if c["offering_id"] == 1)
+    assert course["course_code"] == "CSE401"
+    assert course["professor"] == "김OO"
+    assert course["day_time"] == "화11:00-12:00,목11:00-12:00"
+    assert course["slots"] == [
+        {"day": "화", "start": "11:00", "end": "12:00"},
+        {"day": "목", "start": "11:00", "end": "12:00"},
+    ]
+    assert course["avg_rating"] == 4.5
+    assert course["review_count"] == 2
+
+
+def test_search_no_time_and_no_review(client):
+    course = next(c for c in get_courses(client) if c["offering_id"] == 6)
+    assert course["day_time"] == ""
+    assert course["slots"] == []
+    assert course["avg_rating"] is None
+    assert course["review_count"] == 0
+
+
+def test_search_q_course_name(client):
+    assert names(get_courses(client, "?q=데이터")) == ["데이터베이스", "데이터베이스", "데이터시각화"]
+
+
+def test_search_q_professor(client):
+    assert names(get_courses(client, "?q=김")) == ["기계학습", "실용머신러닝"]
+
+
+def test_search_category(client):
+    courses = get_courses(client, "?category=전공필수&category=교양")
+    assert {c["category"] for c in courses} == {"전공필수", "교양"}
+    assert len(courses) == 4
+
+
+def test_search_day(client):
+    # 월요일 수업이 하나라도 있는 과목만. 시간 미정 과목은 빠진다.
+    assert names(get_courses(client, "?day=월")) == ["데이터베이스", "실용머신러닝"]
+
+
+def test_search_credit(client):
+    assert names(get_courses(client, "?credit=2")) == ["글쓰기와소통"]
+
+
+def test_search_min_rating(client):
+    courses = get_courses(client, "?min_rating=4")
+    assert names(courses) == ["기계학습", "데이터시각화", "실용머신러닝"]
+    assert all(c["avg_rating"] >= 4 for c in courses)
+
+
+def test_search_filters_combined(client):
+    assert names(get_courses(client, "?q=데이터&day=화&min_rating=3.5")) == ["데이터베이스", "데이터시각화"]
+
+
+def test_search_bad_param(client):
+    for query in ["?credit=abc", "?min_rating=높음"]:
+        res = client.get("/api/courses" + query)
+        assert res.status_code == 400
+        assert "error" in res.get_json()
+
+
+def test_search_no_result(client):
+    res = client.get("/api/courses?q=없는과목")
+    assert res.status_code == 200
+    assert res.get_json() == {"count": 0, "courses": []}
+
+
+def test_detail(client):
+    res = client.get("/api/courses/1")
+    assert res.status_code == 200
+    data = res.get_json()
+    assert set(data) == COURSE_KEYS | {"department", "semester", "section", "reviews"}
+    assert data["department"] == "컴퓨터공학과"
+    assert data["semester"] == "2026-2"
+    assert data["section"] == "01"
+    assert len(data["reviews"]) == data["review_count"] == 2
+    for review in data["reviews"]:
+        assert set(review) == {"review_id", "rating", "comment", "taken_semester", "created_at"}
+
+
+def test_detail_reviews_shared_by_sections(client):
+    # 같은 과목·같은 교수의 두 분반은 같은 강의평을 보여준다
+    first = client.get("/api/courses/2").get_json()
+    second = client.get("/api/courses/3").get_json()
+    assert first["reviews"] == second["reviews"]
+    assert first["avg_rating"] == second["avg_rating"] == 3.5
+
+
+def test_detail_404(client):
+    res = client.get("/api/courses/999")
+    assert res.status_code == 404
+    assert res.get_json() == {"error": "존재하지 않는 과목입니다."}
+
+
+def test_unknown_api_404(client):
+    res = client.get("/api/없는주소")
+    assert res.status_code == 404
+    assert "error" in res.get_json()
+
+# ── 4주차: 담기 (내 시간표) ─────────────────────────────
+def add(client, offering_id):
+    """담기 요청을 보내고 응답을 돌려준다."""
+    return client.post("/api/cart", json={"offering_id": offering_id})
+
+
+def cart(client):
+    res = client.get("/api/cart")
+    assert res.status_code == 200
+    return res.get_json()
+
+
+def test_cart_empty(client):
+    assert cart(client) == {"semester": "2026-2", "total_credit": 0, "items": []}
+
+
+def test_cart_add_and_list(client):
+    for offering_id in (2, 1, 7):  # 데이터베이스(3), 기계학습(3), 글쓰기와소통(2)
+        res = add(client, offering_id)
+        assert res.status_code == 201
+        assert res.get_json() == {"ok": True}
+
+    data = cart(client)
+    assert [item["offering_id"] for item in data["items"]] == [2, 1, 7]  # 담은 순서
+    assert data["total_credit"] == 8
+    assert set(data["items"][0]) == {
+        "offering_id", "course_code", "course_name", "professor", "credit",
+        "category", "classroom", "day_time", "slots",
+    }
+
+
+def test_cart_duplicate(client):
+    add(client, 1)
+    res = add(client, 1)
+    assert res.status_code == 409
+    assert res.get_json() == {
+        "error": "이미 담은 과목입니다.", "reason": "already_in_cart", "conflicts": [],
+    }
+
+
+def test_cart_same_course(client):
+    add(client, 2)                 # 데이터베이스 01반
+    res = add(client, 3)           # 데이터베이스 02반 (시간은 안 겹침)
+    assert res.status_code == 409
+    assert res.get_json() == {
+        "error": "같은 과목의 다른 분반이 이미 담겨 있습니다.", "reason": "same_course", "conflicts": [],
+    }
+
+
+def test_cart_time_conflict(client):
+    add(client, 1)                 # 기계학습 화·목 11-12
+    res = add(client, 4)           # 데이터시각화 화·목 11-12
+    assert res.status_code == 409
+    assert res.get_json() == {
+        "error": '"데이터시각화"는 담긴 과목 "기계학습"과 시간이 겹쳐 담을 수 없습니다.',
+        "reason": "time_conflict",
+        "conflicts": ["기계학습"],
+    }
+    assert [item["offering_id"] for item in cart(client)["items"]] == [1]  # 거절된 과목은 안 담김
+
+
+def test_cart_no_time_ok(client):
+    add(client, 1)
+    assert add(client, 6).status_code == 201  # 캡스톤디자인 (시간 미정) → 겹침 없음
+
+
+def test_cart_not_found(client):
+    res = add(client, 999)
+    assert res.status_code == 404
+    assert res.get_json() == {"error": "존재하지 않는 과목입니다."}
+
+
+def test_cart_other_semester(app, client):
+    # 이번 학기(2026-2)가 아닌 개설 과목은 없는 과목으로 취급한다
+    conn = connect(app.config["DB_PATH"])
+    other_id = conn.execute(
+        "INSERT INTO course_offering (course_id, professor_id, semester, section)"
+        " VALUES (1, 1, '2026-1', '01')"
+    ).lastrowid
+    conn.commit()
+    conn.close()
+
+    res = add(client, other_id)
+    assert res.status_code == 404
+    assert res.get_json() == {"error": "존재하지 않는 과목입니다."}
+
+
+def test_cart_bad_body(client):
+    bad_requests = [
+        client.post("/api/cart", json={}),                     # offering_id 없음
+        client.post("/api/cart", json={"offering_id": "abc"}),  # 글자
+        client.post("/api/cart", json={"offering_id": "1"}),    # 숫자처럼 보이는 글자
+        client.post("/api/cart", json={"offering_id": True}),   # True는 1로 통과하면 안 됨
+        client.post("/api/cart", data="1"),                     # JSON이 아님
+    ]
+    for res in bad_requests:
+        assert res.status_code == 400
+        assert res.get_json() == {"error": "offering_id를 숫자로 보내 주세요."}
+    assert cart(client)["items"] == []
+
+
+def test_cart_remove(client):
+    add(client, 1)
+    res = client.delete("/api/cart/1")
+    assert res.status_code == 200
+    assert res.get_json() == {"ok": True}
+    assert cart(client)["items"] == []
+
+    res = client.delete("/api/cart/1")  # 이미 뺀 과목
+    assert res.status_code == 404
+    assert res.get_json() == {"error": "담겨 있지 않은 과목입니다."}
+
+
+def test_cart_remove_then_add_again(client):
+    add(client, 1)
+    client.delete("/api/cart/1")
+    assert add(client, 4).status_code == 201  # 기계학습을 뺐으니 데이터시각화가 담김
+
+
+def test_cart_is_per_session(app, client):
+    other = app.test_client()  # 다른 브라우저
+    add(client, 1)
+    assert cart(other)["items"] == []
+    assert add(other, 4).status_code == 201   # 다른 브라우저에서는 겹침 아님
+    assert [i["offering_id"] for i in cart(client)["items"]] == [1]
+
+
+def test_search_flags(client):
+    add(client, 1)  # 기계학습
+    flags = {c["offering_id"]: (c["in_cart"], c["conflict"]) for c in get_courses(client)}
+    assert flags[1] == (True, False)    # 담은 과목
+    assert flags[4] == (False, True)    # 데이터시각화: 시간 겹침
+    assert flags[6] == (False, False)   # 시간 미정: 겹침 없음
+    assert sum(in_cart for in_cart, _ in flags.values()) == 1
+    assert sum(conflict for _, conflict in flags.values()) == 1
+
+
+def test_detail_flags(client):
+    add(client, 1)
+    assert client.get("/api/courses/1").get_json()["in_cart"] is True
+    assert client.get("/api/courses/4").get_json()["conflict"] is True
+
+# ── 5주차: 강의평 ───────────────────────────────────────
+RATING_ERROR = "별점은 1~5 사이로 골라 주세요."
+COMMENT_ERROR = "강의평은 5자 이상 500자 이하로 적어 주세요."
+SEMESTER_ERROR = "수강 학기 형식이 올바르지 않습니다. (예: 2026-1)"
+
+
+def review_body(**changes):
+    """올바른 강의평 body. 검사하려는 필드만 바꿔서 쓴다."""
+    return {"rating": 3, "comment": "팀 프로젝트가 많아요.", "taken_semester": "2026-1", **changes}
+
+
+def post_review(client, offering_id, **changes):
+    return client.post(f"/api/courses/{offering_id}/reviews", json=review_body(**changes))
+
+
+def detail(client, offering_id):
+    res = client.get(f"/api/courses/{offering_id}")
+    assert res.status_code == 200
+    return res.get_json()
+
+
+def test_review_create(client):
+    res = post_review(client, 1)  # 기계학습: 기존 5점, 4점
+    assert res.status_code == 201
+    review_id = res.get_json()["review_id"]
+    assert res.get_json() == {"review_id": review_id}
+
+    data = detail(client, 1)
+    newest = data["reviews"][0]  # 새 강의평이 맨 앞
+    assert newest["review_id"] == review_id
+    assert newest["rating"] == 3
+    assert newest["comment"] == "팀 프로젝트가 많아요."
+    assert newest["taken_semester"] == "2026-1"
+    assert data["review_count"] == 3
+    assert data["avg_rating"] == 4.0  # (5 + 4 + 3) / 3
+
+    # 검색 목록의 평점·개수도 같이 바뀐다
+    course = next(c for c in get_courses(client) if c["offering_id"] == 1)
+    assert course["review_count"] == 3
+    assert course["avg_rating"] == 4.0
+
+
+def test_review_first_on_course_without_reviews(client):
+    assert detail(client, 7)["avg_rating"] is None  # 글쓰기와소통: 강의평 없음
+
+    assert post_review(client, 7, rating=5).status_code == 201
+
+    data = detail(client, 7)
+    assert data["review_count"] == 1
+    assert data["avg_rating"] == 5.0
+
+
+def test_review_shared_by_professor(client):
+    # 데이터베이스 01반(2번)에 쓰면 같은 교수의 02반(3번)에도 보인다
+    review_id = post_review(client, 2).get_json()["review_id"]
+
+    first = detail(client, 2)
+    second = detail(client, 3)
+    assert second["reviews"][0]["review_id"] == review_id
+    assert first["reviews"] == second["reviews"]
+    assert first["review_count"] == second["review_count"] == 3
+
+
+def test_review_not_shared_with_other_course(client):
+    post_review(client, 1)
+    assert detail(client, 4)["review_count"] == 1  # 데이터시각화는 그대로
+
+
+def test_review_boundary_values_ok(client):
+    for changes in [
+        {"rating": 1},
+        {"rating": 5},
+        {"comment": "다섯글자임"},   # 5자
+        {"comment": "가" * 500},     # 500자
+        {"taken_semester": "2026-2"},
+    ]:
+        assert post_review(client, 1, **changes).status_code == 201
+
+
+def test_review_comment_is_stripped(client):
+    assert post_review(client, 1, comment="  앞뒤 공백 지우기  ").status_code == 201
+    assert detail(client, 1)["reviews"][0]["comment"] == "앞뒤 공백 지우기"
+
+
+def test_review_validation(client):
+    bad_requests = [
+        ({"rating": 0}, RATING_ERROR),
+        ({"rating": 6}, RATING_ERROR),
+        ({"rating": 3.5}, RATING_ERROR),
+        ({"rating": "5"}, RATING_ERROR),
+        ({"rating": True}, RATING_ERROR),   # True는 1로 통과하면 안 됨
+        ({"rating": None}, RATING_ERROR),
+        ({"comment": "네글자임"}, COMMENT_ERROR),       # 4자
+        ({"comment": "  좋아요  "}, COMMENT_ERROR),     # 공백을 지우면 5자 미만
+        ({"comment": "가" * 501}, COMMENT_ERROR),
+        ({"comment": "     "}, COMMENT_ERROR),          # 공백만
+        ({"comment": 12345}, COMMENT_ERROR),
+        ({"comment": None}, COMMENT_ERROR),
+        ({"taken_semester": "2026-3"}, SEMESTER_ERROR),
+        ({"taken_semester": "26-1"}, SEMESTER_ERROR),
+        ({"taken_semester": "2026-1\n"}, SEMESTER_ERROR),  # 줄바꿈이 붙어도 거절
+        ({"taken_semester": 20261}, SEMESTER_ERROR),
+        ({"taken_semester": None}, SEMESTER_ERROR),
+    ]
+    for changes, message in bad_requests:
+        res = post_review(client, 1, **changes)
+        assert res.status_code == 400, changes
+        assert res.get_json() == {"error": message}
+    assert detail(client, 1)["review_count"] == 2  # 하나도 저장되지 않음
+
+
+def test_review_missing_fields(client):
+    for field, message in [
+        ("rating", RATING_ERROR),
+        ("comment", COMMENT_ERROR),
+        ("taken_semester", SEMESTER_ERROR),
+    ]:
+        body = review_body()
+        del body[field]
+        res = client.post("/api/courses/1/reviews", json=body)
+        assert res.status_code == 400, field
+        assert res.get_json() == {"error": message}
+
+
+def test_review_not_json(client):
+    res = client.post("/api/courses/1/reviews", data="별점 5점")
+    assert res.status_code == 400
+    assert res.get_json() == {"error": RATING_ERROR}
+
+
+def test_review_404(client):
+    res = post_review(client, 999)
+    assert res.status_code == 404
+    assert res.get_json() == {"error": "존재하지 않는 과목입니다."}

@@ -121,36 +121,39 @@ def db(db_path):
 
 from pathlib import Path
 
-import pytest
-
-from scripts.init_db import import_all
-
+# ── 2주차 ──────────────────────────────────────────────
 @pytest.fixture
-def sample_raw_dir(tmp_path) -> Path:
+def sample_raw_dir(tmp_path):
+    """샘플 CSV 3개가 든 임시 raw 폴더. 엑셀 저장 파일처럼 BOM을 붙여 쓴다."""
     raw = tmp_path / "raw"
     raw.mkdir()
-    (raw / "courses.csv").write_text(COURSES_CSV, encoding="utf-8")
-    (raw / "offerings.csv").write_text(OFFERINGS_CSV, encoding="utf-8")
-    (raw / "reviews.csv").write_text(REVIEWS_CSV, encoding="utf-8")
+    (raw / "courses.csv").write_text(SAMPLE_COURSES, encoding="utf-8-sig")
+    (raw / "offerings.csv").write_text(SAMPLE_OFFERINGS, encoding="utf-8-sig")
+    (raw / "reviews.csv").write_text(SAMPLE_REVIEWS, encoding="utf-8-sig")
     return raw
 
 
 @pytest.fixture
-def seeded_db_path(db_path, sample_raw_dir) -> Path:
+def seeded_db_path(db_path, sample_raw_dir):
+    """샘플 CSV를 모두 넣은 임시 DB 파일 경로."""
+    from scripts.import_csv import import_all
+
     conn = connect(db_path)
     try:
-        import_all(conn, sample_raw_dir, "2026-09-20", "2026-2")
+        import_all(conn, sample_raw_dir, CAPTURED_AT, SEMESTER)
         conn.commit()
     finally:
         conn.close()
     return db_path
 
+
 @pytest.fixture
 def seeded_db(seeded_db_path):
-    """빈 임시 DB 연결. 테스트가 끝나면 닫는다."""
+    """샘플 CSV를 넣은 임시 DB 연결. 테스트가 끝나면 닫는다."""
     conn = connect(seeded_db_path)
     yield conn
     conn.close()
+
 
 # ── 3주차 ──────────────────────────────────────────────
 @pytest.fixture

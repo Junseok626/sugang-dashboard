@@ -8,10 +8,20 @@
 VS CODE에서 웹 확인하기
 터미널에서 이 명령어 실행
 ```
-python -m http.server 5510 --directory C:/Users/user/Documents/sugang-dashboard/frontend
+처음 한번만. 파이썬 가상환경 켜기.
+cd sugang-dashboard
+python -m venv .venv
+.venv\Scripts\Activate.ps1
+pip install -r backend/requirements.txt
+
+이후 백엔드 폴더로 이동 후 python run.py
+http://localhost:5000 접속.
+ipconfig ip 4v 주소 입력.
+http://172.17.105.23:5000
+가상환경 끌 때 deactivate
 ```
-Serving HTTP on :: port 5510 나오면
-http://172.17.89.18:5510 접속
+
+
 
 엑셀 파일 저장할 때 CSV-UTF8 파일로 저장.
 ```

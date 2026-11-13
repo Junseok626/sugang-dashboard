@@ -1,5 +1,16 @@
 /* Figma 변수(Dashboard Colors) → CSS 변수 */
 :root {
+  --filter-width: 220px;
+  --cart-width: 300px;
+  --block-1: #3a6ea5;
+  --block-2: #dd6630;
+  --block-3: #7b4fc4;
+  /* 4~6은 추가 과목 구분용 보완 색상. Figma에서 확인한 색은 1~3입니다. */
+  --block-4: #318064;
+  --block-5: #397c91;
+  --block-6: #b05272;
+
+
   --color-primary: #2f5597;
   --color-primary-subtle: #edf0f7;
   --color-bg-app: #f3f1ec;
@@ -47,7 +58,7 @@ button, input, select { font: inherit; color: inherit; }
 .header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  gap: 36px;
   flex-shrink: 0;
   height: 64px;
   padding: 0 24px;
@@ -55,13 +66,34 @@ button, input, select { font: inherit; color: inherit; }
   border-bottom: 1px solid var(--color-border);
 }
 
-.brand { display: flex; align-items: center; gap: 12px; }
+.brand { display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
 .brand__logo { width: 28px; height: 28px; border-radius: 6px; background: var(--color-primary); }
 .brand__title { margin: 0; font-size: 16px; font-weight: 700; }
 
-.search { display: flex; gap: 8px; }
+/* Figma Nav/Tab: 선택된 메뉴는 파란 글자와 2px 밑줄 */
+.header-tabs { display: flex; align-self: stretch; gap: 4px; flex-shrink: 0; }
+.header-tabs__link {
+  display: flex;
+  align-items: center;
+  padding: 0 14px;
+  border-bottom: 2px solid transparent;
+  color: var(--color-text-muted);
+  font-size: 14px;
+  font-weight: 500;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.header-tabs__link[aria-current="page"] {
+  color: var(--color-primary);
+  border-bottom-color: var(--color-primary);
+  font-weight: 700;
+}
+.header-tabs__link:focus-visible { outline: 2px solid var(--color-primary); outline-offset: -4px; }
+
+.search { display: flex; gap: 8px; width: 100%; min-width: 0; flex-shrink: 0; }
 .search__input {
-  width: 352px;
+  flex: 1;
+  min-width: 0;
   height: 36px;
   padding: 0 12px;
   font-size: 13px;
@@ -72,6 +104,7 @@ button, input, select { font: inherit; color: inherit; }
 .search__input::placeholder { color: var(--color-text-muted); }
 .search__input:focus { outline: 2px solid var(--color-primary-subtle); border-color: var(--color-primary); }
 .search__button {
+  flex-shrink: 0;
   width: 60px;
   height: 36px;
   font-size: 13px;
@@ -83,7 +116,7 @@ button, input, select { font: inherit; color: inherit; }
   cursor: pointer;
 }
 
-.meta { display: flex; align-items: center; gap: 10px; font-size: 12px; color: var(--color-text-muted); }
+.meta { display: flex; align-items: center; gap: 12px; margin-left: auto; flex-shrink: 0; white-space: nowrap; font-size: 12px; color: var(--color-text-muted); }
 .meta__badge {
   padding: 3px 8px;
   font-size: 11px;
@@ -100,7 +133,7 @@ button, input, select { font: inherit; color: inherit; }
   flex-direction: column;
   gap: 22px;
   flex-shrink: 0;
-  width: 220px;
+  width: var(--filter-width);
   padding: 20px;
   background: var(--color-surface);
   border-right: 1px solid var(--color-border);
@@ -168,19 +201,26 @@ button, input, select { font: inherit; color: inherit; }
 .results {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 16px;
   flex: 1;
   min-width: 0;
   padding: 20px 24px;
+  min-height: 0;
   overflow-y: auto;
 }
-.results__count { margin: 0; font-size: 13px; color: var(--color-text-muted); }
+.results__count {
+  margin: 0;
+  font-size: 13px;
+  color: var(--color-text-muted);
+  flex-shrink: 0;
+}
 
 .course-table {
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: 8px;
   overflow: hidden;
+  flex-shrink: 0;
 }
 .course-table__head,
 .course-row {
@@ -205,6 +245,8 @@ button, input, select { font: inherit; color: inherit; }
 .course-row:last-child { border-bottom: 0; }
 .course-row__rating { color: var(--color-star); }
 .course-row__rating--conflict { color: var(--color-danger); }
+.course-row__rating--empty { color: var(--color-text-muted); }
+.course-row__name { min-width: 0; padding-right: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .course-table__empty { margin: 0; padding: 24px 12px; font-size: 13px; color: var(--color-text-muted); }
 
 .btn-add {
@@ -236,7 +278,7 @@ button, input, select { font: inherit; color: inherit; }
   flex-direction: column;
   gap: 12px;
   flex-shrink: 0;
-  width: 300px;
+  width: var(--cart-width);
   padding: 20px;
   background: var(--color-surface);
   border-left: 1px solid var(--color-border);
@@ -289,6 +331,9 @@ button, input, select { font: inherit; color: inherit; }
 }
 .cart-card__text { display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 0; }
 .cart-card__name { font-size: 13px; font-weight: 500; }
+.cart-card__name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cart-list__empty { font-size: 12px; color: var(--color-text-muted); padding: 12px; }
+.status-retry { display: block; margin-top: 12px; }
 .cart-card__meta { font-size: 11px; color: var(--color-text-muted); }
 .cart-card__remove {
   padding: 0;
@@ -313,3 +358,141 @@ button, input, select { font: inherit; color: inherit; }
 .toast[hidden] { display: none; }
 .toast__icon { flex-shrink: 0; width: 12px; height: 11px; padding-left: 0.8px; }
 .toast__message { margin: 0; font-size: 12px; line-height: 1.5; color: var(--color-warn-text); }
+
+#tab-search,
+#tab-timetable {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+
+#tab-search[hidden],
+#tab-timetable[hidden] {
+  display: none;
+}
+/* ---------- Full timetable (Figma 18:391 / 18:503) ---------- */
+.timetable-page { gap: 24px; padding: 28px; overflow-y: auto; align-items: flex-start; }
+.timetable-card {
+  flex: 1; min-width: 0; min-height: 100%; padding: 24px;
+  background: var(--color-surface); border: 1px solid var(--color-border); border-radius: 16px;
+}
+.timetable-card__header { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 16px; }
+.timetable-card__title { margin: 0; font-size: 18px; font-weight: 700; }
+.timetable-card__summary { margin: 4px 0 0; font-size: 12px; color: var(--color-text-muted); }
+.timetable-action {
+  display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;
+  height: 36px; padding: 0 16px; border-radius: 8px; background: var(--color-primary);
+  color: var(--color-text-on-primary); font-size: 13px; font-weight: 700; text-decoration: none;
+}
+.timetable-action:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 3px; }
+.week-grid {
+  --time-label-width: 56px; --day-header-height: 34px; --half-hour-height: 26px;
+  position: relative; border: 1px solid var(--color-border); overflow: hidden;
+}
+.week-grid__cells {
+  display: grid; grid-template-columns: var(--time-label-width) repeat(5, minmax(0, 1fr));
+  grid-template-rows: var(--day-header-height) repeat(20, var(--half-hour-height));
+}
+.week-grid__head, .week-grid__time, .week-grid__cell { border-right: 1px solid var(--color-border); border-bottom: 1px solid var(--color-border); }
+.week-grid__head { display: flex; align-items: center; justify-content: center; font-size: 12px; background: var(--color-surface-subtle); }
+.week-grid__time { padding-top: 4px; text-align: center; font-size: 11px; color: var(--color-text-muted); background: var(--color-surface-subtle); }
+.week-grid__cell { background: var(--color-surface); }
+.timetable-block {
+  position: absolute; width: calc((100% - var(--time-label-width)) / 5);
+  display: flex; flex-direction: column; gap: 3px; padding: 8px; overflow: hidden;
+  color: var(--color-text-on-primary); border-right: 1px solid var(--color-surface); border-bottom: 1px solid var(--color-surface);
+}
+.timetable-block__name { font-size: 12px; font-weight: 700; }
+.timetable-block__room { font-size: 10px; opacity: .9; }
+.timetable-block__name, .timetable-block__room { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex-shrink: 0; }
+.timetable-panel {
+  display: flex; flex-direction: column; gap: 12px; width: 300px; flex-shrink: 0; padding: 20px;
+  border: 1px solid var(--color-border); border-radius: 16px; background: var(--color-surface);
+}
+.timetable-panel h2 { margin: 0; font-size: 14px; font-weight: 700; }
+.timetable-total { display: flex; justify-content: space-between; align-items: center; padding-top: 12px; border-top: 1px solid var(--color-border); font-size: 13px; color: var(--color-text-muted); }
+.timetable-total strong { font-size: 14px; color: var(--color-text); }
+.timetable-list__empty { padding: 24px 8px; border-radius: 8px; text-align: center; font-size: 12px; background: var(--color-surface-subtle); color: var(--color-text-muted); }
+.timetable-empty {
+  position: absolute; z-index: 1; left: 50%; top: 50%; transform: translate(-50%, -50%);
+  display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 28px 32px;
+  border: 1px solid var(--color-border); border-radius: 12px; background: var(--color-surface);
+  box-shadow: 0 6px 20px rgb(0 0 0 / 8%); white-space: nowrap;
+}
+.timetable-empty[hidden], .timetable-status[hidden] { display: none; }
+.timetable-empty__icon { width: 40px; height: 40px; border-radius: 10px; background: var(--color-primary-subtle); }
+.timetable-empty h3 { margin: 0; font-size: 16px; }
+.timetable-empty p { margin: 0; font-size: 13px; color: var(--color-text-muted); }
+.timetable-empty .timetable-action { height: 40px; }
+.timetable-status { padding: 12px; border: 1px solid var(--color-warn-border); border-radius: 6px; background: var(--color-warn-bg); color: var(--color-warn-text); font-size: 12px; }
+.timetable-status p { margin: 0 0 8px; }
+.timetable-panel .cart-card__remove:disabled { cursor: wait; opacity: .5; }
+
+/* 5주차: 상세 모달과 강의평 작성 */
+.detail-trigger { border: 0; padding: 0; background: transparent; text-align: left; cursor: pointer; }
+.course-detail-link { max-width: 100%; white-space: inherit; overflow-wrap: anywhere; }
+.course-detail-link:hover, .detail-trigger:hover .cart-card__name { color: var(--color-primary); text-decoration: underline; }
+button.timetable-block { font: inherit; text-align: left; cursor: pointer; }
+[data-detail-id]:focus-visible, .detail-modal button:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 2px; }
+.detail-modal { width: 480px; max-width: calc(100vw - 32px); max-height: calc(100dvh - 32px); padding: 10px; border: 0; border-radius: 16px; color: var(--color-text); background: var(--color-surface); box-shadow: 0 12px 32px #0000002e; }
+.detail-modal[open] { display: flex; flex-direction: column; }
+.detail-modal:not([open]), .detail-modal [hidden] { display: none !important; }
+.detail-modal::backdrop { background: #00000066; }
+.detail-header { position: relative; padding: 20px 24px 18px; border-bottom: 1px solid var(--color-border); flex-shrink: 0; }
+.detail-header h2 { margin: 0 36px 6px 0; font-size: 20px; overflow-wrap: anywhere; }
+#detail-code { margin: 0; font-size: 12px; color: var(--color-text-muted); overflow-wrap: anywhere; }
+.detail-close { position: absolute; top: 20px; right: 24px; width: 28px; height: 28px; border: 0; border-radius: 6px; background: var(--color-disabled-bg); color: var(--color-text-muted); cursor: pointer; }
+.detail-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; font-size: 11px; }
+.detail-tags span { padding: 3px 8px; border-radius: 10px; background: var(--color-disabled-bg); }
+#detail-category { background: var(--color-primary-subtle); color: var(--color-primary); }
+#detail-rating { background: var(--color-warn-bg); color: var(--color-star); }
+.detail-body { min-height: 0; overflow-y: auto; padding: 20px 24px; overscroll-behavior: contain; }
+.detail-section + .detail-section { margin-top: 24px; }
+.detail-section h3 { margin: 0 0 12px; font-size: 12px; color: var(--color-text-muted); }
+.detail-info { margin: 0; font-size: 13px; }
+.detail-info > div { display: flex; gap: 8px; margin-top: 10px; }
+.detail-info dt { width: 64px; flex-shrink: 0; color: var(--color-text-muted); }
+.detail-info dd { margin: 0; overflow-wrap: anywhere; }
+.detail-review-heading { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.detail-link { padding: 0; border: 0; background: none; color: var(--color-primary); font-size: 11px; cursor: pointer; }
+.review-card, .review-form { padding: 12px 14px; border: 1px solid var(--color-border); border-radius: 8px; }
+.review-card + .review-card { margin-top: 8px; }
+.review-card__meta { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.review-card__stars { color: var(--color-star); font-size: 12px; }
+.review-card__term { color: var(--color-text-muted); font-size: 11px; }
+.review-card__comment { margin: 8px 0 0; font-size: 13px; line-height: 1.6; white-space: pre-wrap; overflow-wrap: anywhere; }
+.detail-empty { font-size: 13px; color: var(--color-text-muted); line-height: 1.6; }
+.detail-footer { display: flex; gap: 10px; padding: 16px 24px; border-top: 1px solid var(--color-border); flex-shrink: 0; }
+.detail-button { min-height: 40px; padding: 8px 14px; border: 1px solid var(--color-border-strong); border-radius: 8px; background: var(--color-surface); font-size: 13px; cursor: pointer; }
+.detail-button--primary { background: var(--color-primary); border-color: var(--color-primary); color: var(--color-text-on-primary); font-size: 14px; font-weight: 700; }
+#detail-cart { flex: 1; }
+.detail-button--remove { color: var(--color-remove); background: var(--color-remove-subtle); border-color: var(--color-remove); }
+.detail-modal button:disabled { opacity: .55; cursor: not-allowed; }
+.detail-error { color: var(--color-danger); font-size: 12px; line-height: 1.6; overflow-wrap: anywhere; }
+.detail-notice { color: var(--color-primary); font-size: 12px; }
+.detail-error:empty, .detail-notice:empty { display: none; }
+.review-form { margin-bottom: 12px; background: var(--color-surface-subtle); }
+.review-form fieldset { min-width: 0; margin: 0; padding: 0; border: 0; }
+.review-form legend { margin-bottom: 8px; font-size: 13px; font-weight: 700; }
+.review-stars { display: flex; width: fit-content; gap: 4px; touch-action: none; user-select: none; cursor: ew-resize; }
+/* 별의 왼쪽/오른쪽 절반을 각각 0.5점/1점 버튼으로 사용합니다. */
+.review-star { position: relative; display: inline-block; width: 32px; height: 36px; font-size: 30px; line-height: 36px; text-align: center; }
+.review-star__icon { display: inline-block; background: linear-gradient(to right, var(--color-star) var(--star-fill, 0%), var(--color-border-strong) var(--star-fill, 0%)); background-clip: text; -webkit-background-clip: text; color: transparent; }
+.review-star__half { position: absolute; top: 0; left: 0; width: 50%; height: 100%; padding: 0; border: 0; background: transparent; cursor: ew-resize; }
+.review-star__half--right { left: 50%; }
+.review-star__half:hover { background: #b8860b15; }
+.review-card__stars { display: inline-flex; gap: 1px; }
+#review-rating-value, #review-length { margin: 4px 0 10px; font-size: 11px; color: var(--color-text-muted); }
+#review-length { text-align: right; }
+.review-form label { display: block; margin: 12px 0 6px; font-size: 12px; }
+.review-form select, .review-form textarea { width: 100%; padding: 8px; border: 1px solid var(--color-border-strong); border-radius: 6px; font: inherit; font-size: 13px; background: var(--color-surface); }
+.review-form textarea { resize: vertical; min-height: 96px; }
+.review-actions { display: flex; justify-content: flex-end; gap: 8px; }
+
+/* 이수체계도 메뉴의 안내 화면 */
+#tab-curriculum { flex: 1; min-height: 0; padding: 28px; overflow: auto; }
+#tab-curriculum[hidden] { display: none; }
+.curriculum-card { padding: 24px; border: 1px solid var(--color-border); border-radius: 16px; background: var(--color-surface); }
+.curriculum-card h2 { margin: 0 0 12px; font-size: 18px; }
+.curriculum-card p { margin: 0 0 24px; font-size: 13px; color: var(--color-text-muted); }
+button.timetable-block { border-top: 0; border-left: 0; }
