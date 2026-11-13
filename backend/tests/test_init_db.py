@@ -59,7 +59,7 @@ def add_department(db, name="컴퓨터공학과"):
     return db.execute("INSERT INTO department (name) VALUES (?)", (name,)).lastrowid
 
 
-def add_course(db, department_id, code="CSE401", name="기계학습", credit=3, category="전공선택"):
+def add_course(db, department_id, code="CSE401", name="기계학습", credit=3, category="전공심화"):
     return db.execute(
         "INSERT INTO course (department_id, course_code, course_name, credit, category)"
         " VALUES (?, ?, ?, ?, ?)",
@@ -109,14 +109,14 @@ def test_course_code_unique(db):
 def test_category_check(db):
     dept = add_department(db)
     with pytest.raises(sqlite3.IntegrityError):
-        add_course(db, dept, category="전공핵심")
+        add_course(db, dept, category="전공필수")
 
 
 def test_category_allowed_values(db):
     dept = add_department(db)
-    for i, category in enumerate(["전공필수", "전공선택", "교양"]):
+    for i, category in enumerate(["전공기초", "전공핵심", "전공심화", "교양선택", "교양필수"]):
         add_course(db, dept, code=f"C{i}", category=category)
-    assert db.execute("SELECT COUNT(*) FROM course").fetchone()[0] == 3
+    assert db.execute("SELECT COUNT(*) FROM course").fetchone()[0] == 5
 
 
 @pytest.mark.parametrize("rating", [0, 6])

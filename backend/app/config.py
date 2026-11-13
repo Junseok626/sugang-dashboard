@@ -55,7 +55,7 @@ SECRET_KEY = os.environ.get("SECRET_KEY", "dev-only-change-me")
 PERMANENT_SESSION_LIFETIME = timedelta(days=180)
 
 # ── 화면·데이터 규칙 ─────────────────────────────────
-CATEGORIES = ["전공필수", "전공선택", "교양"]
+CATEGORIES = ["전공기초", "전공핵심", "전공심화", "교양선택", "교양필수"]
 TIMETABLE_DAYS = ["월", "화", "수", "목", "금"]
 TIMETABLE_START = "09:00"
 TIMETABLE_END = "19:00"

@@ -96,8 +96,8 @@ def test_search_q_professor(client):
 
 
 def test_search_category(client):
-    courses = get_courses(client, "?category=전공필수&category=교양")
-    assert {c["category"] for c in courses} == {"전공필수", "교양"}
+    courses = get_courses(client, "?category=전공핵심&category=교양선택")
+    assert {c["category"] for c in courses} == {"전공핵심", "교양선택"}
     assert len(courses) == 4
 
 

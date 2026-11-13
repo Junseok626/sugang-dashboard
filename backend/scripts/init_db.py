@@ -76,7 +76,7 @@ CREATE TABLE IF NOT EXISTS course (
     course_name   TEXT NOT NULL,                     -- 과목명
     credit        INTEGER NOT NULL CHECK (credit >= 1),   -- 학점
     category      TEXT NOT NULL
-                  CHECK (category IN ('전공필수', '전공선택', '교양'))  -- 이수구분 (필터 값과 같음)
+                  CHECK (category IN ('전공기초', '전공핵심', '전공심화', '교양선택', '교양필수'))  -- 이수구분 (필터 값과 같음)
 );
 
 -- 4-3. 교수
