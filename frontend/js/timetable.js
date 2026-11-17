@@ -1,9 +1,30 @@
+// 두 시간표가 공유하는 표시 범위. 빈 시간표는 월~금 09:00~19:00.
+window.getTimetableRange = (courses) => {
+  const allDays = ["월", "화", "수", "목", "금", "토", "일"];
+  let start = 9 * 60;
+  let end = 19 * 60;
+  const days = new Set(allDays.slice(0, 5));
+  const minutes = (value) => {
+    const [hour, minute] = String(value).split(":").map(Number);
+    return hour * 60 + minute;
+  };
+  for (const course of courses) {
+    for (const slot of course.slots || []) {
+      const from = minutes(slot.start);
+      const to = minutes(slot.end);
+      if (!allDays.includes(slot.day) || !Number.isFinite(from) ||
+          !Number.isFinite(to) || from < 0 || to > 1440 || to <= from) continue;
+      days.add(slot.day);
+      start = Math.min(start, Math.floor(from / 60) * 60);
+      end = Math.max(end, Math.ceil(to / 30) * 30);
+    }
+  }
+  return { days: allDays.filter(day => days.has(day)), start, end };
+};
+
 // 내 시간표: 서버의 getCart() 결과로 격자·목록·학점을 함께 갱신.
 (() => {
   "use strict";
-  const DAYS = ["월", "화", "수", "목", "금"];
-  const START = 9 * 60;
-  const END = 19 * 60;
   const STEP = 30;
   const state = { cart: null, loading: false, removing: false, error: "" };
   let latestRequest = 0;
@@ -30,9 +51,12 @@
     return [...groups].map(([range, days]) => `${days.join("·")} ${range}`).join(", ");
   }
 
-  function buildGrid() {
+  function buildGrid({ days: DAYS, start: START, end: END }) {
     const cells = document.getElementById("week-grid-cells");
     cells.replaceChildren();
+    const grid = cells.parentElement;
+    grid.style.setProperty("--grid-days", DAYS.length);
+    grid.style.setProperty("--grid-rows", (END - START) / STEP);
     const place = (node, row, col, span = 1) => {
       node.style.gridRow = `${row} / span ${span}`;
       node.style.gridColumn = String(col);
@@ -43,7 +67,7 @@
     for (let index = 0; index < (END - START) / STEP; index++) {
       const start = START + index * STEP;
       if (index % 2 === 0) {
-        place(el("div", "week-grid__time", `${String(start / 60).padStart(2, "0")}:00`), index + 2, 1, 2);
+        place(el("div", "week-grid__time", `${String(start / 60).padStart(2, "0")}:00`), index + 2, 1, Math.min(2, (END - START) / STEP - index));
       }
       DAYS.forEach((_, day) => place(el("div", "week-grid__cell"), index + 2, day + 2));
     }
@@ -52,6 +76,9 @@
   function render() {
     const cart = state.cart;
     const items = cart?.items || [];
+    const range = window.getTimetableRange(items);
+    const { days: DAYS, start: START, end: END } = range;
+    buildGrid(range);
     const busy = state.loading || state.removing;
     document.getElementById("tab-timetable").setAttribute("aria-busy", String(busy));
     document.getElementById("timetable-summary").textContent = cart
@@ -86,7 +113,7 @@
         const block = el("button", "timetable-block");
         block.type = "button";
         block.dataset.detailId = course.offering_id;
-        block.style.left = `calc(var(--time-label-width) + (100% - var(--time-label-width)) * ${day} / 5)`;
+        block.style.left = `calc(var(--time-label-width) + (100% - var(--time-label-width)) * ${day} / ${DAYS.length})`;
         block.style.top = `calc(var(--day-header-height) + var(--half-hour-height) * ${(start - START) / STEP})`;
         block.style.height = `calc(var(--half-hour-height) * ${(end - start) / STEP})`;
         block.style.backgroundColor = `var(--block-${index % 6 + 1})`;
@@ -153,7 +180,7 @@
   function init() {
     if (initialized || !isAvailable()) return;
     initialized = true;
-    buildGrid();
+    buildGrid(window.getTimetableRange([]));
     document.getElementById("timetable-retry").addEventListener("click", refresh);
   }
 
