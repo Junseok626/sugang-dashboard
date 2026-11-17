@@ -34,7 +34,8 @@
 
     // 첫 접속은 전체 과목 조회. 시간표 화면이 없는 구성도 검색으로 연결합니다.
     if ((!["#timetable", "#search", "#curriculum"].includes(tab)) ||
-        (tab === "#timetable" && !window.timetable?.isAvailable())) {
+        (tab === "#timetable" && !window.timetable?.isAvailable()) ||
+        (tab === "#curriculum" && !document.getElementById("tab-curriculum"))) {
       tab = "#search";
       window.history.replaceState(null, "", tab);
     }
@@ -45,7 +46,8 @@
     document.getElementById("tab-search").hidden =
       tab !== "#search";
 
-    document.getElementById("tab-curriculum").hidden = tab !== "#curriculum";
+    const curriculum = document.getElementById("tab-curriculum");
+    if (curriculum) curriculum.hidden = tab !== "#curriculum";
 
     // 선택된 탭의 파란 글자·밑줄 표시
     document.querySelectorAll(".header-tabs__link").forEach((link) => {
