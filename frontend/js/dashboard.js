@@ -2,9 +2,6 @@
 // 2주차 담기는 메모리의 과목 객체 배열입니다. 새로고침하면 초기화됩니다.
 (() => {
 "use strict";
-const DAYS = ["월", "화", "수", "목", "금"];
-const DAY_START = 9 * 60;
-const DAY_END = 19 * 60;
 const SLOT = 30;
 
 const state = {
@@ -165,6 +162,9 @@ function renderToast(visible) {
 function renderMiniGrid() {
   const grid = document.getElementById("mini-grid");
   const taken = cartSlots();
+  const { days: DAYS, start: DAY_START, end: DAY_END } = window.getTimetableRange(state.cart);
+  grid.style.setProperty("--grid-days", DAYS.length);
+  grid.style.setProperty("--grid-rows", (DAY_END - DAY_START) / SLOT);
   const place = (node, row, col, rowSpan = 1) => {
     node.style.gridRow = `${row} / span ${rowSpan}`;
     node.style.gridColumn = String(col);
@@ -183,7 +183,7 @@ function renderMiniGrid() {
     const lastRow = i === slots - 1 ? " mini-grid__cell--last-row" : "";
     if (start % 60 === 0) {
       const hourLast = i + 2 >= slots ? " mini-grid__cell--last-row" : "";
-      place(el("div", "mini-grid__cell mini-grid__cell--label" + hourLast, String(start / 60)), row, 1, 2);
+      place(el("div", "mini-grid__cell mini-grid__cell--label" + hourLast, String(start / 60)), row, 1, Math.min(2, slots - i));
     }
     DAYS.forEach((d, di) => {
       const slot = { day: d, start, end: start + SLOT };
