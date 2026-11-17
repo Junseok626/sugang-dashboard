@@ -115,7 +115,7 @@ CREATE TABLE IF NOT EXISTS review (
     review_id      INTEGER PRIMARY KEY,
     course_id      INTEGER NOT NULL REFERENCES course (course_id),
     professor_id   INTEGER NOT NULL REFERENCES professor (professor_id),
-    rating         INTEGER NOT NULL CHECK (rating BETWEEN 1 AND 5),  -- 별점
+    rating         REAL NOT NULL CHECK (rating BETWEEN 0.5 AND 5 AND rating * 2 = CAST(rating * 2 AS INTEGER)),  -- 별점
     comment        TEXT NOT NULL,                    -- 서술형 후기
     taken_semester TEXT NOT NULL,                    -- 작성자가 들은 학기, 예: 2026-1
     created_at     TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP   -- 작성 시각 (UTC)

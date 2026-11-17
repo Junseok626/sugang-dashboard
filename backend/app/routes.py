@@ -117,8 +117,9 @@ def add_review(offering_id):
 
     rating = body.get("rating")
     # bool은 int의 일종이라 True가 1점으로 통과하지 않도록 따로 막는다
-    if not isinstance(rating, int) or isinstance(rating, bool) or not 1 <= rating <= 5:
-        return error("별점은 1~5 사이로 골라 주세요.", 400)
+    if (not isinstance(rating, (int, float)) or isinstance(rating, bool)
+        or not 0.5 <= rating <= 5 or not float(rating * 2).is_integer()):
+        return error("별점은 0.5~5점 사이에서 0.5점 단위로 골라 주세요.", 400)
 
     comment = body.get("comment")
     comment = comment.strip() if isinstance(comment, str) else ""
