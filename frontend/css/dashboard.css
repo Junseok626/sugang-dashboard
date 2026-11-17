@@ -288,8 +288,8 @@ button, input, select { font: inherit; color: inherit; }
 
 .mini-grid {
   display: grid;
-  grid-template-columns: 36px repeat(5, 1fr);
-  grid-template-rows: 24px repeat(20, 10px); /* 09:00~19:00, 30분 단위 */
+  grid-template-columns: 36px repeat(var(--grid-days, 5), minmax(0, 1fr));
+  grid-template-rows: 24px repeat(var(--grid-rows, 20), 10px); /* 09:00~19:00, 30분 단위 */
   border: 1px solid var(--color-border);
   border-radius: 6px;
   overflow: hidden;
@@ -390,15 +390,15 @@ button, input, select { font: inherit; color: inherit; }
   position: relative; border: 1px solid var(--color-border); overflow: hidden;
 }
 .week-grid__cells {
-  display: grid; grid-template-columns: var(--time-label-width) repeat(5, minmax(0, 1fr));
-  grid-template-rows: var(--day-header-height) repeat(20, var(--half-hour-height));
+  display: grid; grid-template-columns: var(--time-label-width) repeat(var(--grid-days, 5), minmax(0, 1fr));
+  grid-template-rows: var(--day-header-height) repeat(var(--grid-rows, 20), var(--half-hour-height));
 }
 .week-grid__head, .week-grid__time, .week-grid__cell { border-right: 1px solid var(--color-border); border-bottom: 1px solid var(--color-border); }
 .week-grid__head { display: flex; align-items: center; justify-content: center; font-size: 12px; background: var(--color-surface-subtle); }
 .week-grid__time { padding-top: 4px; text-align: center; font-size: 11px; color: var(--color-text-muted); background: var(--color-surface-subtle); }
 .week-grid__cell { background: var(--color-surface); }
 .timetable-block {
-  position: absolute; width: calc((100% - var(--time-label-width)) / 5);
+  position: absolute; width: calc((100% - var(--time-label-width)) / var(--grid-days, 5));
   display: flex; flex-direction: column; gap: 3px; padding: 8px; overflow: hidden;
   color: var(--color-text-on-primary); border-right: 1px solid var(--color-surface); border-bottom: 1px solid var(--color-surface);
 }
