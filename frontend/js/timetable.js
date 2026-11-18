@@ -151,6 +151,7 @@ window.getTimetableRange = (courses) => {
       if (!Array.isArray(cart.items)) throw new Error("시간표 목록을 읽을 수 없습니다.");
       state.cart = cart;
     } catch (error) {
+      if (error.name === "AbortError") return;
       if (requestId === latestRequest) state.error = error.message;
     } finally {
       if (requestId === latestRequest) {
@@ -170,11 +171,20 @@ window.getTimetableRange = (courses) => {
       // 서버에 저장된 최신 목록과 검색 결과를 모두 다시 조회.
       await Promise.all([refresh(), window.dashboard.refresh()]);
     } catch (error) {
+      if (error.name === "AbortError") return;
       state.error = error.message;
     } finally {
       state.removing = false;
       render();
     }
+  }
+
+  function resetSemester() {
+    latestRequest++;
+    state.cart = null;
+    state.error = "";
+    state.loading = true;
+    if (isAvailable()) render();
   }
 
   function init() {
@@ -192,5 +202,5 @@ window.getTimetableRange = (courses) => {
       .every((id) => document.getElementById(id));
   }
 
-  window.timetable = Object.freeze({ init, refresh, isAvailable });
+  window.timetable = Object.freeze({ init, refresh, isAvailable, resetSemester });
 })();
