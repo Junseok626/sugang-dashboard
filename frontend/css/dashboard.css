@@ -496,3 +496,9 @@ button.timetable-block { font: inherit; text-align: left; cursor: pointer; }
 .curriculum-card h2 { margin: 0 0 12px; font-size: 18px; }
 .curriculum-card p { margin: 0 0 24px; font-size: 13px; color: var(--color-text-muted); }
 button.timetable-block { border-top: 0; border-left: 0; }
+
+/* 학기 표시를 누르면 실제 개설 학기 목록을 선택합니다. */
+.semester-select { font: inherit; color: var(--color-text-muted); background-color: var(--color-surface); border: 1px solid var(--color-border); border-radius: 6px; padding: 6px 10px; cursor: pointer; max-width: 260px; }
+.semester-select:disabled { color: var(--color-text-disabled); cursor: default; }
+.semester-select:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 2px; }
+.semester-message { max-width: 230px; font-size: 11px; color: var(--color-text-muted); }
