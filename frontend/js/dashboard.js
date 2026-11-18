@@ -18,6 +18,7 @@ const state = {
 };
 
 let latestRequest = 0;
+let latestCartRequest = 0;
 async function loadCourses() {
   const requestId = ++latestRequest;
   state.loading = true;
@@ -33,6 +34,7 @@ async function loadCourses() {
     if (!Array.isArray(response.courses)) throw new Error("과목 목록을 읽을 수 없습니다.");
     state.courses = response.courses;
   } catch (error) {
+    if (error.name === "AbortError") return;
     if (requestId !== latestRequest) return;
     state.courses = [];
     state.error = error.message;
@@ -234,6 +236,7 @@ async function handleAddToCart(id) {
       loadCourses(),
     ]);
   } catch (error) {
+    if (error.name === "AbortError") return;
     state.cartMessage = error.message;
     renderToast(state.courses);
   }
@@ -248,6 +251,7 @@ async function handleRemoveFromCart(id) {
       loadCourses(),
     ]);
   } catch (error) {
+    if (error.name === "AbortError") return;
     state.cartMessage = error.message;
     renderToast(state.courses);
   }
@@ -295,12 +299,15 @@ function bindFilters() {
 }
 
 async function loadCart() {
+  const requestId = ++latestCartRequest;
   try {
   const cart = await window.api.getCart();
+  if (requestId !== latestCartRequest) return;
   state.cart = cart.items;
   renderMiniGrid();
   renderCart();
   } catch (error) {
+    if (error.name === "AbortError") return;
     state.cartMessage = error.message;
     renderToast(state.courses);
   }
@@ -319,6 +326,17 @@ async function refresh() {
   render();
 }
 
+function resetSemester() {
+  latestRequest++;
+  latestCartRequest++;
+  state.courses = [];
+  state.cart = [];
+  state.error = "";
+  state.cartMessage = "";
+  state.loading = false;
+  render();
+}
+
 function init() {
   bindFilters();
   renderMiniGrid();
@@ -328,6 +346,7 @@ function init() {
 window.dashboard = Object.freeze({
   init,
   refresh,
+  resetSemester,
 });
 
 })();
