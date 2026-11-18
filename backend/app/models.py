@@ -118,6 +118,12 @@ def get_meta(db, semester):
     return {"semester": semester, "last_updated": row["last_updated"]}
 
 
+def list_semesters(db, default_semester):
+    """고를 수 있는 학기 목록: 개설 과목이 하나라도 있는 학기 + 기본 학기. 오래된 순."""
+    rows = db.execute("SELECT DISTINCT semester FROM course_offering").fetchall()
+    return sorted({row["semester"] for row in rows} | {default_semester})
+
+
 def search_offerings(db, semester, session_id=None, q="", categories=(), days=(),
                      credit=None, min_rating=None):
     """과목 찾기 표의 목록. 비어 있는 조건은 빼고 검색한다."""

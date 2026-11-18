@@ -28,8 +28,33 @@ def current_session_id():
     return session["sid"]
 
 
+class SemesterError(Exception):
+    """?semester= 값이 잘못됐을 때. 아래 semester_error가 오류 응답으로 바꾼다."""
+
+    def __init__(self, message, status):
+        super().__init__(message)
+        self.message = message
+        self.status = status
+
+
+@bp.errorhandler(SemesterError)
+def semester_error(e):
+    return error(e.message, e.status)
+
+
+def available_semesters():
+    """고를 수 있는 학기 목록 (개설 과목이 있는 학기 + config의 기본 학기)."""
+    return models.list_semesters(get_db(), current_app.config["CURRENT_SEMESTER"])
+
+
 def current_semester():
-    return current_app.config["CURRENT_SEMESTER"]
+    """화면에서 고른 학기 (?semester=2026-1). 안 보내면 config의 CURRENT_SEMESTER."""
+    semester = request.args.get("semester") or current_app.config["CURRENT_SEMESTER"]
+    if not SEMESTER_PATTERN.fullmatch(semester):
+        raise SemesterError("학기 형식이 올바르지 않습니다. (예: 2026-1)", 400)
+    if semester not in available_semesters():
+        raise SemesterError("조회할 수 있는 학기가 아닙니다.", 404)
+    return semester
 
 
 def error(message, status):
@@ -37,8 +62,10 @@ def error(message, status):
 
 @bp.get("/meta")
 def meta():
-    """A-1. 헤더 정보"""
-    return models.get_meta(get_db(), current_semester())
+    """A-1. 헤더 정보 + 고를 수 있는 학기 목록"""
+    data = models.get_meta(get_db(), current_semester())
+    data["semesters"] = available_semesters()
+    return data
 
 
 @bp.get("/courses")
