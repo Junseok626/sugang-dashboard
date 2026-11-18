@@ -43,7 +43,9 @@ def names(courses):
 def test_meta(client):
     res = client.get("/api/meta")
     assert res.status_code == 200
-    assert res.get_json() == {"semester": "2026-2", "last_updated": "2026-09-20"}
+    assert res.get_json() == {
+        "semester": "2026-2", "last_updated": "2026-09-20", "semesters": ["2026-2"],
+    }
 
 
 def test_index_page(client):
@@ -308,7 +310,7 @@ def test_detail_flags(client):
     assert client.get("/api/courses/4").get_json()["conflict"] is True
 
 # ── 5주차: 강의평 ───────────────────────────────────────
-RATING_ERROR = "별점은 1~5 사이로 골라 주세요."
+RATING_ERROR = "별점은 0.5~5점 사이에서 0.5점 단위로 골라 주세요."
 COMMENT_ERROR = "강의평은 5자 이상 500자 이하로 적어 주세요."
 SEMESTER_ERROR = "수강 학기 형식이 올바르지 않습니다. (예: 2026-1)"
 
@@ -359,6 +361,15 @@ def test_review_first_on_course_without_reviews(client):
     assert data["avg_rating"] == 5.0
 
 
+def test_review_half_point(client):
+    assert post_review(client, 7, rating=4.5).status_code == 201
+    assert post_review(client, 7, rating=3.5).status_code == 201
+
+    data = detail(client, 7)
+    assert sorted(r["rating"] for r in data["reviews"]) == [3.5, 4.5]
+    assert data["avg_rating"] == 4.0
+
+
 def test_review_shared_by_professor(client):
     # 데이터베이스 01반(2번)에 쓰면 같은 교수의 02반(3번)에도 보인다
     review_id = post_review(client, 2).get_json()["review_id"]
@@ -377,7 +388,9 @@ def test_review_not_shared_with_other_course(client):
 
 def test_review_boundary_values_ok(client):
     for changes in [
+        {"rating": 0.5},
         {"rating": 1},
+        {"rating": 4.5},
         {"rating": 5},
         {"comment": "다섯글자임"},   # 5자
         {"comment": "가" * 500},     # 500자
@@ -395,7 +408,9 @@ def test_review_validation(client):
     bad_requests = [
         ({"rating": 0}, RATING_ERROR),
         ({"rating": 6}, RATING_ERROR),
-        ({"rating": 3.5}, RATING_ERROR),
+        ({"rating": 5.5}, RATING_ERROR),
+        ({"rating": 0.25}, RATING_ERROR),
+        ({"rating": 3.3}, RATING_ERROR),    # 0.5점 단위가 아님
         ({"rating": "5"}, RATING_ERROR),
         ({"rating": True}, RATING_ERROR),   # True는 1로 통과하면 안 됨
         ({"rating": None}, RATING_ERROR),
@@ -441,3 +456,79 @@ def test_review_404(client):
     res = post_review(client, 999)
     assert res.status_code == 404
     assert res.get_json() == {"error": "존재하지 않는 과목입니다."}
+
+
+# ── 학기 선택 (?semester=) ──────────────────────────────
+SEMESTER_FORMAT_ERROR = "학기 형식이 올바르지 않습니다. (예: 2026-1)"
+
+
+def add_offering(app, semester, course_id=1, professor_id=1, section="01", slots=()):
+    """샘플에 없는 학기의 개설 과목을 DB에 직접 넣고 offering_id를 돌려준다."""
+    conn = connect(app.config["DB_PATH"])
+    offering_id = conn.execute(
+        "INSERT INTO course_offering (course_id, professor_id, semester, section) VALUES (?, ?, ?, ?)",
+        (course_id, professor_id, semester, section),
+    ).lastrowid
+    for day, start, end in slots:
+        conn.execute(
+            "INSERT INTO offering_slot (offering_id, day, start_time, end_time) VALUES (?, ?, ?, ?)",
+            (offering_id, day, start, end),
+        )
+    conn.commit()
+    conn.close()
+    return offering_id
+
+
+def test_meta_semesters(app, client):
+    add_offering(app, "2026-1")
+    data = client.get("/api/meta?semester=2026-1").get_json()
+    assert data["semester"] == "2026-1"
+    assert data["semesters"] == ["2026-1", "2026-2"]  # 오래된 순
+    assert client.get("/api/meta").get_json()["semester"] == "2026-2"  # 안 보내면 기본 학기
+
+
+def test_search_by_semester(app, client):
+    other_id = add_offering(app, "2026-1", slots=[("화", "11:00", "12:00")])
+    courses = get_courses(client, "?semester=2026-1")
+    assert [c["offering_id"] for c in courses] == [other_id]
+    assert courses[0]["course_name"] == "기계학습"
+    assert get_courses(client, "?q=없는과목&semester=2026-1") == []  # 다른 조건과 함께 써도 됨
+    assert len(get_courses(client)) == 7                                  # 기본 학기는 그대로
+
+
+def test_cart_by_semester(app, client):
+    other_id = add_offering(app, "2026-1", slots=[("화", "11:00", "12:00")])
+    add(client, 1)  # 2026-2 기계학습 (화·목 11-12)
+
+    # 학기마다 시간표가 따로라서, 같은 과목·같은 시간이어도 2026-1 시간표에는 담긴다
+    res = client.post("/api/cart?semester=2026-1", json={"offering_id": other_id})
+    assert res.status_code == 201
+    spring = client.get("/api/cart?semester=2026-1").get_json()
+    assert spring["semester"] == "2026-1"
+    assert [item["offering_id"] for item in spring["items"]] == [other_id]
+    assert [item["offering_id"] for item in cart(client)["items"]] == [1]
+
+    # 다른 학기 과목은 그 학기를 고른 상태에서만 담을 수 있다
+    assert client.post("/api/cart?semester=2026-1", json={"offering_id": 1}).status_code == 404
+
+    assert client.delete(f"/api/cart/{other_id}?semester=2026-1").status_code == 200
+    assert client.get("/api/cart?semester=2026-1").get_json()["items"] == []
+    assert [item["offering_id"] for item in cart(client)["items"]] == [1]
+
+
+def test_semester_bad_format(client):
+    for query in ["?semester=2026-3", "?semester=26-1", "?semester=abc"]:
+        for path in ["/api/meta", "/api/courses", "/api/cart"]:
+            res = client.get(path + query)
+            assert res.status_code == 400, path + query
+            assert res.get_json() == {"error": SEMESTER_FORMAT_ERROR}
+        res = client.post("/api/cart" + query, json={"offering_id": 1})
+        assert res.status_code == 400
+    assert cart(client)["items"] == []
+
+
+def test_semester_not_available(client):
+    for path in ["/api/meta", "/api/courses", "/api/cart"]:
+        res = client.get(path + "?semester=2030-1")
+        assert res.status_code == 404
+        assert res.get_json() == {"error": "조회할 수 있는 학기가 아닙니다."}
