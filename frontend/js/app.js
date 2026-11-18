@@ -2,29 +2,66 @@
 (() => {
   "use strict";
 
-  // 헤더의 학기·최신 반영일 조회
-  async function loadMeta() {
-    const semester = document.getElementById("meta-semester");
-    const badge = document.getElementById("meta-updated");
-    const retry = document.getElementById("meta-retry");
-
-    retry.hidden = true;
-
+  let semesters = [];
+  let loadingMeta = false;
+  const $ = (id) => document.getElementById(id);
+  function message(text) {
+    $("semester-message").textContent = text;
+    $("semester-message").hidden = !text;
+  }
+  function updateSemesterSelect() {
+    const select = $("meta-semester");
+    select.disabled = loadingMeta || window.api.isMutating() || !window.api.getSemester();
+    // 실패한 전환은 기존에 조회 중인 학기로 되돌립니다.
+    if (!loadingMeta && window.api.getSemester()) select.value = window.api.getSemester();
+  }
+  function renderSemesterOptions() {
+    const select = $("meta-semester");
+    select.replaceChildren();
+    for (const semester of [...semesters].reverse()) {
+      const option = document.createElement("option");
+      option.value = semester;
+      option.textContent = `${semester}학기 기준`;
+      select.append(option);
+    }
+    select.value = window.api.getSemester();
+  }
+  async function loadMeta(target = window.api.getSemester()) {
+    if (loadingMeta || window.api.isMutating()) return;
+    loadingMeta = true;
+    updateSemesterSelect();
+    $("meta-retry").hidden = true;
     try {
-      const meta = await window.api.getMeta();
-
-      semester.textContent = `${meta.semester}학기 기준`;
-      semester.removeAttribute("title");
-
+      const meta = await window.api.getMeta(target);
+      if (!/^\d{4}-[12]$/.test(meta.semester) || (target && meta.semester !== target)) {
+        throw new Error("선택한 학기를 불러오지 못했습니다. 기존 학기를 유지합니다.");
+      }
+      if (window.api.isMutating()) throw new Error("담기·빼기가 끝난 뒤 학기를 변경해 주세요.");
+      const previous = window.api.getSemester();
+      window.api.setSemester(meta.semester);
+      semesters = Array.isArray(meta.semesters)
+        ? [...new Set(meta.semesters.filter(value => typeof value === "string" && /^\d{4}-[12]$/.test(value)))].sort()
+        : [];
+      if (!semesters.includes(meta.semester)) semesters.push(meta.semester);
+      semesters.sort();
+      renderSemesterOptions();
+      const badge = $("meta-updated");
       badge.hidden = !meta.last_updated;
-      badge.textContent = meta.last_updated
-        ? `최신 반영일 ${meta.last_updated.slice(5, 10).replace("-", ".")}`
-        : "";
+      badge.textContent = meta.last_updated ? `최신 반영일 ${meta.last_updated.slice(5, 10).replace("-", ".")}` : "";
+      message(Array.isArray(meta.semesters) ? "" : "현재는 기본 학기만 조회할 수 있어요.");
+      if (previous !== meta.semester) {
+        window.dispatchEvent(new Event("semester-change"));
+        window.dashboard.resetSemester();
+        window.timetable.resetSemester();
+        await Promise.all([window.dashboard.refresh(), window.timetable.refresh()]);
+      }
     } catch (error) {
-      semester.textContent = "학기 정보를 불러오지 못했습니다.";
-      semester.title = error.message;
-      badge.hidden = true;
-      retry.hidden = false;
+      message(error.message);
+      if (!window.api.getSemester()) $("meta-semester").options[0].textContent = "학기 정보를 불러오지 못했습니다.";
+      $("meta-retry").hidden = false;
+    } finally {
+      loadingMeta = false;
+      updateSemesterSelect();
     }
   }
 
@@ -59,6 +96,7 @@
     });
 
     // 선택한 탭의 데이터를 다시 조회하고 화면 갱신
+    if (!window.api.getSemester()) return;
     if (tab === "#search") {
       window.dashboard.refresh();
     } else if (tab === "#timetable") {
@@ -72,7 +110,12 @@
 
     document
       .getElementById("meta-retry")
-      .addEventListener("click", loadMeta);
+      .addEventListener("click", () => loadMeta());
+    $("meta-semester").addEventListener("change", (event) => {
+      const target = event.target.value;
+      if (semesters.includes(target) && target !== window.api.getSemester()) loadMeta(target);
+    });
+    window.addEventListener("api-busy-change", updateSemesterSelect);
 
     window.addEventListener("hashchange", showTab);
 
