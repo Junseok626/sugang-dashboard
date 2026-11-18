@@ -337,5 +337,9 @@
     const button = event.target.closest("[data-detail-id]");
     if (button) openDetail(Number(button.dataset.detailId));
   });
+  window.addEventListener("semester-change", () => {
+    version++; // 학기 변경 전에 시작된 상세 조회를 무효화합니다.
+    if (dialog.open) dialog.close();
+  });
   window.openDetail = openDetail;
 })();
