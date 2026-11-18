@@ -23,7 +23,10 @@
       </nav>
 
       <div class="meta">
-        <span id="meta-semester">학기 정보를 불러오는 중…</span>
+        <select id="meta-semester" class="semester-select" aria-label="조회 학기 선택" aria-describedby="semester-message" disabled>
+          <option value="">학기 정보를 불러오는 중…</option>
+        </select>
+        <span id="semester-message" class="semester-message" role="status" hidden></span>
         <span class="meta__badge" id="meta-updated" hidden></span>
         <button class="btn-add" id="meta-retry" type="button" hidden>다시 시도</button>
       </div>
@@ -87,6 +90,8 @@
               <button class="day-chip" type="button" data-day="수" aria-pressed="false">수</button>
               <button class="day-chip" type="button" data-day="목" aria-pressed="false">목</button>
               <button class="day-chip" type="button" data-day="금" aria-pressed="false">금</button>
+              <button class="day-chip" type="button" data-day="토" aria-pressed="false">토</button>
+
             </div>
           </fieldset>
 
