@@ -119,7 +119,7 @@ def test_category_allowed_values(db):
     assert db.execute("SELECT COUNT(*) FROM course").fetchone()[0] == 5
 
 
-@pytest.mark.parametrize("rating", [0, 6])
+@pytest.mark.parametrize("rating", [0, 0.25, 3.3, 5.5, 6])
 def test_rating_check(db, rating):
     course = add_course(db, add_department(db))
     prof = add_professor(db)
@@ -130,9 +130,9 @@ def test_rating_check(db, rating):
 def test_rating_allowed_range(db):
     course = add_course(db, add_department(db))
     prof = add_professor(db)
-    for rating in range(1, 6):
-        add_review(db, course, prof, rating)
-    assert db.execute("SELECT COUNT(*) FROM review").fetchone()[0] == 5
+    for i in range(1, 11):  # 0.5, 1.0, 1.5, ..., 5.0
+        add_review(db, course, prof, i / 2)
+    assert db.execute("SELECT COUNT(*) FROM review").fetchone()[0] == 10
 
 
 def test_slot_time_check(db):
