@@ -8,6 +8,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/dashboard.css">
+  <link rel="stylesheet" href="css/curriculum.css">
 </head>
 <body>
   <div class="app">
@@ -20,6 +21,7 @@
       <nav class="header-tabs" aria-label="주요 메뉴">
         <a class="header-tabs__link" href="#timetable">내 시간표</a>
         <a class="header-tabs__link" href="#search">과목 찾기</a>
+        <a class="header-tabs__link" href="#curriculum">이수체계도</a>
       </nav>
 
       <div class="meta">
@@ -153,6 +155,47 @@
         </aside>
       </div>
     </section>
+
+    <section id="tab-curriculum" aria-label="이수체계도" hidden>
+      <div class="curriculum-card">
+        <header class="curriculum-heading">
+          <div>
+            <h2>교과목 이수체계도</h2>
+            <p class="curriculum-department">ICT융합학부</p>
+            <p class="curriculum-major">데이터인텔리전스 전공</p>
+            <p>학년·학기별 권장 이수 순서</p>
+          </div>
+          <div class="curriculum-actions">
+            <button type="button" id="curriculum-undo" hidden>초기화 되돌리기</button>
+            <button type="button" id="curriculum-reset" disabled>이수 표시 초기화</button>
+          </div>
+        </header>
+        <div class="curriculum-progress-row">
+          <strong id="curriculum-progress-text">0과목 표시</strong>
+          <progress id="curriculum-progress" value="0" max="49" aria-label="이수체계도 표시 진행률"></progress>
+          <span id="curriculum-path-count"></span>
+        </div>
+        <div class="curriculum-legend" aria-label="이수체계도 범례">
+          <div class="curriculum-legend-group"><strong>이수구분</strong>
+            <span class="curriculum-legend-item"><i class="curriculum-swatch" aria-hidden="true"></i>전공기초</span>
+            <span class="curriculum-legend-item"><i class="curriculum-swatch curriculum-swatch--core" aria-hidden="true"></i>전공핵심</span>
+            <span class="curriculum-legend-item"><i class="curriculum-swatch curriculum-swatch--advanced" aria-hidden="true"></i>전공심화</span>
+            <span class="curriculum-legend-item"><i class="curriculum-swatch curriculum-swatch--intro" aria-hidden="true"></i>전공소개</span>
+          </div>
+          <div class="curriculum-legend-group"><strong>과목 연계</strong><span>선수 과목 → 후속 과목</span><span class="curriculum-legend-item"><i class="curriculum-swatch curriculum-swatch--done" aria-hidden="true">✓</i>이수 표시</span></div>
+        </div>
+        <div class="curriculum-scroll" tabindex="0" role="region" aria-label="학년별 이수 트리, 좁은 화면에서는 좌우로 스크롤">
+          <div class="curriculum-board" id="curriculum-board"></div>
+        </div>
+        <section class="curriculum-modules" aria-labelledby="curriculum-modules-title">
+          <h3 id="curriculum-modules-title">모듈 완성 현황</h3>
+          <div class="curriculum-module-list" id="curriculum-module-list"></div>
+          <p id="curriculum-module-total" role="status" aria-live="polite"></p>
+        </section>
+        <p id="curriculum-storage-message" class="curriculum-storage-message" role="status" hidden></p>
+        <span id="curriculum-announcement" class="curriculum-sr" role="status" aria-live="polite"></span>
+      </div>
+    </section>
   </div>
 
   <dialog id="detail-modal" class="detail-modal" aria-labelledby="detail-title">
@@ -232,6 +275,8 @@
   <script src="js/timetable.js"></script>
   <script src="js/dashboard.js"></script>
   <script src="js/detail.js"></script>
+  <script src="js/curriculum-data.js"></script>
+  <script src="js/curriculum.js"></script>
   <script src="js/app.js"></script>
 </body>
 </html>
