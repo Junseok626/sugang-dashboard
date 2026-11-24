@@ -86,6 +86,9 @@
     const curriculum = document.getElementById("tab-curriculum");
     if (curriculum) curriculum.hidden = tab !== "#curriculum";
 
+    document.querySelector(".app").classList.toggle("app--curriculum", tab === "#curriculum");
+    if (tab === "#curriculum") window.curriculum?.refresh();
+
     // 선택된 탭의 파란 글자·밑줄 표시
     document.querySelectorAll(".header-tabs__link").forEach((link) => {
       if (link.getAttribute("href") === tab) {
@@ -107,6 +110,7 @@
   function init() {
     window.dashboard.init();
     window.timetable.init();
+    window.curriculum?.init();
 
     document
       .getElementById("meta-retry")
