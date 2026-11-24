@@ -56,15 +56,17 @@ const numericSlots = (course) => course.slots.map((s) => ({
 }));
 
 // 같은 시간대는 요일을 묶어서 표시: "화·목 11:00–12:00"
-function formatSlots(slots) {
-  if (!slots.length) return "시간 미정";
+// 요일마다 시간이 다르면 묶음이 여러 개가 됩니다: ["화 10:30–12:00", "목 09:00–10:30"]
+function slotGroups(slots) {
+  if (!slots.length) return ["시간 미정"];
   const groups = new Map();
   for (const s of slots) {
     const range = `${s.start}–${s.end}`;
     groups.set(range, [...(groups.get(range) || []), s.day]);
   }
-  return [...groups].map(([range, days]) => `${days.join("·")} ${range}`).join(", ");
+  return [...groups].map(([range, days]) => `${days.join("·")} ${range}`);
 }
+const formatSlots = (slots) => slotGroups(slots).join(", ");
 
 const overlaps = (a, b) => a.day === b.day && a.start < b.end && b.start < a.end;
 
@@ -136,10 +138,14 @@ function renderResults() {
     name.append(link);
     name.title = course.course_name;
 
+    // 시간 묶음마다 한 줄씩 (요일별로 시간이 다르면 줄을 나눠 정렬)
+    const time = el("span", "course-row__time");
+    for (const text of slotGroups(course.slots)) time.append(el("span", "course-row__slot", text));
+
     row.append(
       name,
       el("span", "", course.professor),
-      el("span", "", formatSlots(course.slots)),
+      time,
       el("span", "", String(course.credit)),
       rating,
       btn,
